@@ -5,10 +5,13 @@ import QMarkdown 1.7
 Rectangle {
     id: root
     property alias markdown: document.markdown
+    property bool dark: false
     property color paperColor: "white"
     property color textColor: "#202020"
     property color linkColor: "#0066cc"
     property color selectionColor: "#803b82f6"
+    readonly property color separatorColor: Qt.alpha(textColor, 0.2)
+    readonly property color codeBackgroundColor: Qt.alpha(textColor, 0.07)
     signal copyRequested(string text)
     color: paperColor
 
@@ -29,6 +32,7 @@ Rectangle {
             selectionEnabled: true
             gfmEnabled: true
             style: MarkdownStyle {
+                preset: root.dark ? MarkdownStyle.PolishedDark : MarkdownStyle.PolishedLight
                 bodyColor: root.textColor
                 h1Color: root.textColor
                 h2Color: root.textColor
@@ -39,6 +43,12 @@ Rectangle {
                 codeBlockColor: root.textColor
                 linkColor: root.linkColor
                 selectionBackgroundColor: root.selectionColor
+                headings.h1.separatorColor: root.separatorColor
+                headings.h2.separatorColor: root.separatorColor
+                codeBlock.backgroundColor: root.codeBackgroundColor
+                codeBlock.borderColor: root.separatorColor
+                inlineCode.backgroundColor: root.codeBackgroundColor
+                table.borderColor: root.separatorColor
             }
             onCopyRequested: function(text) { root.copyRequested(text) }
             onCodeBlockCopyRequested: function(text) { root.copyRequested(text) }

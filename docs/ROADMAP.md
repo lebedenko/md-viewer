@@ -10,8 +10,9 @@ new feature work gets a short SDD. Checkboxes mean implementation, with verifica
 - [x] GTest integration and application startup checks.
 - [x] clang-format, clang-tidy, qmllint and local acceptance entry point.
 - [x] SDD template, architecture, mockup notes, GitHub workflow files.
-- [ ] Hosted GitHub execution after the repository is created.
-- [ ] Native visual/input review of the scaffold.
+- [ ] Hosted GitHub execution after the repository is created (deferred by owner).
+- [x] Polished preset, full GFM and header/footer baseline ([0002](sdd/0002-foundation-baseline.md)).
+- [ ] Native visual/input review of the baseline (pending).
 
 ## 1 — Useful single-file reader
 

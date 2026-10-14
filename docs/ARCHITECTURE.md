@@ -16,6 +16,8 @@ src/main.cpp -> QML engine -> Main.qml -> ReaderPane.qml -> QMarkdown 1.7
 
 One executable owns its MdViewer QML module. Main composes the window and maps the effective Qt palette to
 ReaderPane. ReaderPane owns its viewport, rendering style, selection enablement and code-copy controls.
+Main also provides a header/footer frame; ReaderPane selects qmarkdown's Polished preset from the system theme,
+keeps palette-bound color overrides and enables all GFM extensions.
 Clipboard owns the operating-system clipboard write. The initial document is bundled text; there is no file loader yet.
 Images remain denied by qmarkdown's default resource policy. Link navigation is not implemented in the scaffold.
 Standard runtime Controls allow user-selected installed styles without a direct dependency on any specific style.
