@@ -1,0 +1,31 @@
+# Build, dependencies and editor-generated files
+/build/
+/build-*/
+/cmake-build-*/
+/compile_commands.json
+/CMakeUserPresets.json
+/.qmlls.ini
+/.cache/
+/.task/
+__pycache__/
+*.pyc
+# Editor and machine-local agent state
+.idea/
+.vscode/
+.agents/
+.codex/
+.claude/
+.serena/
+*~
+*.swp
+*.swo
+.DS_Store
+# Credentials and local environment
+.env
+.env.*
+*.key
+*.pem
+.mcp.json
+# Temporary output
+*.log
+*.tmp

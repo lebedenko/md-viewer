@@ -1,0 +1,61 @@
+# Roadmap
+
+Milestones are ordered by useful behavior, not dates. Only the scaffold is authorized/implemented now;
+new feature work gets a short SDD. Checkboxes mean implementation, with verification recorded in its SDD.
+
+## 0 — Foundation
+
+- [x] Independent C++23 / Qt Quick / CMake / Ninja project.
+- [x] External QMarkdown 1.7 package and explicit pinned preparation.
+- [x] GTest integration and application startup checks.
+- [x] clang-format, clang-tidy, qmllint and local acceptance entry point.
+- [x] SDD template, architecture, mockup notes, GitHub workflow files.
+- [ ] Hosted GitHub execution after the repository is created.
+- [ ] Native visual/input review of the scaffold.
+
+## 1 — Useful single-file reader
+
+- [ ] Open local Markdown from CLI and file dialog; explicit encoding/error behavior.
+- [ ] Selection/copy and code-copy behavior exercised on real documents.
+- [ ] Zoom, comfortable width and small typography preferences; light/dark palette behavior.
+- [ ] Live reload through ordinary and atomic saves, with proportional position preservation.
+- [ ] Configured external editor action; safe argument handling and failure feedback.
+- [ ] Conventional keyboard shortcuts and visible focus.
+
+Exit: open a real document, read/copy comfortably, edit externally and see saved changes without disruptive jumps.
+
+## 2 — Documentation navigation
+
+- [ ] Relative links, fragment navigation, Back/Forward and reading-position restoration.
+- [ ] Outline and rendered-text search with visible results.
+- [ ] Define and adopt required qmarkdown public APIs; update the dependency lock and consumer checks together.
+- [ ] Keyboard access to navigation controls and document links, subject to upstream support.
+
+Prerequisites: heading/anchor metadata, location geometry, rendered search/highlighting and update validity contracts.
+These are not available through the current 1.7 public API. No private API workaround is planned.
+Exit: follow a cross-document heading link, find text, copy it, return to the previous reading position, and reload safely.
+
+## 3 — Folder browsing and continuity
+
+- [ ] Open a folder, lazy Markdown tree, filename picker and defined hidden/ignored/symlink behavior.
+- [ ] Recent documents and remembered reading positions.
+- [ ] Tabs/session restoration and read-only source view, after validating the simpler workflow.
+
+No database or persistent content index initially. Folder browsing is not a project-management system.
+
+## 4 — Stabilization and delivery
+
+- [ ] Real-world large-document performance and reload benchmarks; use upstream improvements where appropriate.
+- [ ] Accessibility/focus review and native scaling/light/dark checks.
+- [ ] Adopt extension renderers only for justified document needs; no requirement to wait for all qmarkdown v2 features.
+- [ ] Choose application license and stable application identity.
+- [ ] Desktop/MIME metadata and a tested installation/package story.
+- [ ] Document supported environment and missing capabilities before a first downloadable release.
+
+Streaming is not a blocker for local-file reading. PDF export, graphs, AI, Git UI, sync and built-in editing are not planned.
+
+## Separate future decision
+
+Vim-style navigation/selection will be considered only after all other planned features are implemented and stabilized.
+There is no current commitment to implement it. It would require a separate design and renderer API assessment.
+`holonight-qt` and embedded Neovim are excluded, not optional build flavors.

@@ -1,0 +1,64 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      QT_VERSION: 6.8.3
+      CLANG_FORMAT: clang-format-18
+      CLANG_TIDY: clang-tidy-18
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ libgtest-dev clang-format-18 clang-tidy-18 python3-venv libgl1-mesa-dev libegl1-mesa-dev libxkbcommon0 libxcb-cursor0
+          python3 -m venv "$RUNNER_TEMP/aqt"
+          "$RUNNER_TEMP/aqt/bin/pip" install aqtinstall==3.3.0
+          "$RUNNER_TEMP/aqt/bin/aqt" install-qt linux desktop "$QT_VERSION" linux_gcc_64 -O "$RUNNER_TEMP/Qt"
+          echo "Qt6_ROOT=$RUNNER_TEMP/Qt/$QT_VERSION/gcc_64" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=$RUNNER_TEMP/Qt/$QT_VERSION/gcc_64" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$RUNNER_TEMP/Qt/$QT_VERSION/gcc_64/lib" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/Qt/$QT_VERSION/gcc_64/bin" >> "$GITHUB_PATH"
+      - name: Record tool versions
+        run: |
+          cmake --version
+          ninja --version
+          g++ --version
+          clang-format-18 --version
+          clang-tidy-18 --version
+          qmake -query QT_VERSION
+          dpkg-query -W libgtest-dev
+      - name: Prepare pinned external renderer
+        run: python3 scripts/deps.py
+      - name: Validate
+        run: python3 scripts/check.py
+      - name: Upload diagnostics
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: validation-diagnostics
+          path: |
+            build/debug/Testing/Temporary/
+            build/debug/CMakeFiles/CMakeConfigureLog.yaml
+            build/release/CMakeFiles/CMakeConfigureLog.yaml
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Upload development staging output
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: md-viewer-linux-development
+          path: build/install/
+          retention-days: 7

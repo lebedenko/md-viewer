@@ -1,0 +1,59 @@
+version: '3'
+vars:
+  PRESET: '{{default "debug" .PRESET}}'
+tasks:
+  deps:
+    desc: Explicitly download, verify, build and install pinned qmarkdown locally
+    cmds:
+      - python3 scripts/deps.py {{.CLI_ARGS}}
+  configure:
+    desc: Configure the selected Ninja preset
+    cmds:
+      - cmake --preset {{.PRESET}}
+  build:
+    desc: Configure and build the selected preset
+    cmds:
+      - task: configure
+      - cmake --build --preset {{.PRESET}}
+  run:
+    desc: Build and run the application
+    cmds:
+      - task: build
+      - build/{{.PRESET}}/md-viewer {{.CLI_ARGS}}
+  test:
+    desc: Build Debug and run CTest
+    cmds:
+      - task: build
+        vars: {PRESET: debug}
+      - ctest --preset debug
+  format:
+    desc: Format application-owned C++
+    cmds:
+      - python3 scripts/quality.py format
+  format-check:
+    desc: Check C++ formatting without edits
+    cmds:
+      - python3 scripts/quality.py format-check
+  tidy:
+    desc: Build Debug and run clang-tidy
+    cmds:
+      - task: build
+        vars: {PRESET: debug}
+      - python3 scripts/quality.py tidy
+  qml-lint:
+    desc: Build Debug and run qmllint
+    cmds:
+      - task: build
+        vars: {PRESET: debug}
+      - cmake --build build/debug --target all_qmllint
+  check:
+    desc: Run the same acceptance checks as CI; no dependency downloads
+    aliases: [verify, ci]
+    cmds:
+      - python3 scripts/check.py
+  stage:
+    desc: Install Release into build/install; dependencies remain external
+    cmds:
+      - task: build
+        vars: {PRESET: release}
+      - cmake --install build/release
