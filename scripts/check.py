@@ -26,6 +26,6 @@ if __name__ == "__main__":
     environment.update(QT_QPA_PLATFORM="offscreen", QT_QUICK_BACKEND="software",
                        QT_QUICK_CONTROLS_STYLE="Fusion", QT_QPA_PLATFORMTHEME="")
     # Staging checks the application payload; this is not a portable binary bundle.
-    prefix_lib = str(ROOT / "build/deps/prefix/lib")
-    environment["LD_LIBRARY_PATH"] = prefix_lib + os.pathsep + environment.get("LD_LIBRARY_PATH", "")
+    provider_lib = (ROOT / "build/release/qmarkdown-library-dir.txt").read_text().strip()
+    environment["LD_LIBRARY_PATH"] = os.pathsep.join(filter(None, (provider_lib, environment.get("LD_LIBRARY_PATH", ""))))
     run(ROOT / "build/install/bin/md-viewer", "--smoke-test", env=environment)

@@ -14,7 +14,8 @@ Artifacts are development outputs tied to the selected Qt/qmarkdown stack, not p
 There is intentionally no Docker toolchain, large matrix, coverage gate, mandatory self-review, or separate deployment
 system at this stage. The CI SDK checks the older supported Qt line; current host Qt provides an additional development
 check. Add a second Qt job or sanitizers when failures or compatibility work justify them.
-Hosted workflows are prepared but cannot be executed until a GitHub repository is created.
+The GitHub repository is active; hosted run evidence is recorded in the
+[Foundation SDD](sdd/0002-foundation-baseline.md). Hosted validation of local changes requires pushing them.
 
 ## Solo workflow
 

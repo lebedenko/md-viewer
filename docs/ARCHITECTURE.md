@@ -9,7 +9,7 @@ External editing is planned through a configured editor; embedded editing is out
 ## Implemented scaffold
 
 ```text
-src/main.cpp -> QML engine -> Main.qml -> ReaderPane.qml -> QMarkdown 1.7
+src/main.cpp -> QML engine -> Main.qml -> ReaderPane.qml -> QMarkdown 1.10
                                   |           |
                                   + Clipboard <- copy requests
 ```
@@ -56,9 +56,9 @@ Keep logical document position, selection state and viewport offset distinct.
 
 ## Renderer prerequisites
 
-QMarkdown 1.7 provides native rendering, optional GFM, selection/plain-text copy and code-copy actions.
-It does not expose supported headings, fragment lookup, rendered search/highlights or full caret geometry.
-Outline, anchors, search and semantic restoration require upstream public contracts before those milestones ship.
+QMarkdown 1.10 provides native rendering, optional GFM, selection/plain-text copy and code-copy actions, headings,
+fragment navigation, literal Find with rendered highlights, navigation rectangles and opt-in keyboard link traversal.
+Application integration for outline, navigation and Find remains in later milestones.
 Do not implement regex Markdown parsing or inspect renderer delegates to bridge the gap.
 
 Use an application-local adapter only when needed to translate public qmarkdown APIs into application state.

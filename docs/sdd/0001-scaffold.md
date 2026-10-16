@@ -37,5 +37,6 @@ Verified on 2026-10-14 in the final project directory:
 - Workflow/Task YAML, CMake preset and dependency JSON, Python syntax and relative documentation links checked.
 - No HoloNight package is required; automated runtime checks use Fusion and clear the platform-theme override.
 
-Hosted Ubuntu/Qt 6.8.3 execution and native visual/input review have not been performed.
+At the time of the 2026-10-14 checks, hosted Ubuntu/Qt 6.8.3 execution and native visual/input review had not been
+performed. Subsequent Foundation evidence is recorded in [0002](0002-foundation-baseline.md).
 The staged executable is not a portable package. Release packaging and license selection remain future work.

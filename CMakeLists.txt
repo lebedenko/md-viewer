@@ -10,14 +10,16 @@ include(CTest)
 
 # Dependency acquisition is explicit; configuration never accesses the network.
 find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2)
-find_package(QMarkdown 1.7 CONFIG REQUIRED)
+find_package(QMarkdown 1.10 CONFIG REQUIRED)
 if(QMarkdown_VERSION VERSION_GREATER_EQUAL 2.0)
-  message(FATAL_ERROR "QMarkdown 2.x requires a reviewed migration; use 1.7 or a compatible 1.x release.")
+  message(FATAL_ERROR "QMarkdown 2.x requires a reviewed migration; use 1.10 or a compatible 1.x release.")
 endif()
 get_target_property(qmarkdown_type QMarkdown::QMarkdown TYPE)
 if(NOT qmarkdown_type STREQUAL "SHARED_LIBRARY")
   message(FATAL_ERROR "This scaffold supports shared QMarkdown packages. Static deployment is not configured.")
 endif()
+file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/qmarkdown-library-dir.txt"
+  CONTENT "$<TARGET_FILE_DIR:QMarkdown::QMarkdown>\n")
 list(APPEND QML_IMPORT_PATH "${QMarkdown_QML_IMPORT_PATH}")
 set(QML_IMPORT_PATH "${QML_IMPORT_PATH}" CACHE STRING "Additional QML module roots" FORCE)
 qt_standard_project_setup(REQUIRES 6.8)

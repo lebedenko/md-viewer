@@ -9,7 +9,7 @@ Dependency ownership does not change this rule: qmarkdown is a third-party packa
 | Dependency | Scope | Consumption | Version policy |
 | --- | --- | --- | --- |
 | Qt | Production | find_package(Qt6 ...); Qt6::* | Minimum 6.8; initial CI SDK 6.8.3 |
-| qmarkdown | Production | find_package(QMarkdown 1.7 CONFIG REQUIRED); QMarkdown::QMarkdown | Compatible 1.x; reproducible preparation pins 1.7.0 commit + SHA-256 |
+| qmarkdown | Production | find_package(QMarkdown 1.10 CONFIG REQUIRED); QMarkdown::QMarkdown | Compatible 1.x; reproducible preparation pins 1.10.0 commit + SHA-256 |
 | GTest | Tests only | find_package(GTest 1.12 CONFIG REQUIRED); GTest::gtest | Distro/dev package; excluded with BUILD_TESTING=OFF |
 | tomlplusplus | Not currently needed | Future find_package(tomlplusplus CONFIG REQUIRED); tomlplusplus::tomlplusplus | Add only with an actual TOML consumer |
 
@@ -31,9 +31,9 @@ The script reruns the upstream configure/build/install so partial preparation ca
 
 `CMAKE_PREFIX_PATH` locates CMake packages, while the QML engine also needs the installed QML import root. The scaffold
 uses QMarkdown_QML_IMPORT_PATH exported by the provider for both linting and runtime. Shared native libraries must also
-be discoverable by the dynamic loader. Build-tree RPATH handles local app builds; scripts/check.py supplies the local
-provider library directory for the staged smoke test. A custom externally installed provider may need its own
-LD_LIBRARY_PATH for staging. System packages should install into normal loader/QML paths.
+be discoverable by the dynamic loader. Build-tree RPATH handles local app builds; CMake generates the selected provider
+library directory using `TARGET_FILE_DIR`; scripts/check.py prepends it to `LD_LIBRARY_PATH` for the staged smoke test, preserving existing loader paths. A stale local preparation prefix
+therefore cannot override the selected provider. System packages should install into normal loader/QML paths.
 
 ## Upgrades
 

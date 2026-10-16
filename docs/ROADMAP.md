@@ -5,14 +5,17 @@ new feature work gets a short SDD. Checkboxes mean implementation, with verifica
 
 ## 0 — Foundation
 
+Complete; local, hosted-main and owner-confirmed native evidence is recorded in
+[0002](sdd/0002-foundation-baseline.md). Hosted checks for the uncommitted 1.10 upgrade await a push.
+
 - [x] Independent C++23 / Qt Quick / CMake / Ninja project.
-- [x] External QMarkdown 1.7 package and explicit pinned preparation.
+- [x] External QMarkdown 1.10 package and explicit pinned preparation.
 - [x] GTest integration and application startup checks.
 - [x] clang-format, clang-tidy, qmllint and local acceptance entry point.
 - [x] SDD template, architecture, mockup notes, GitHub workflow files.
-- [ ] Hosted GitHub execution after the repository is created (deferred by owner).
+- [x] Hosted GitHub execution (see [Foundation verification](sdd/0002-foundation-baseline.md)).
 - [x] Polished preset, full GFM and header/footer baseline ([0002](sdd/0002-foundation-baseline.md)).
-- [ ] Native visual/input review of the baseline (pending).
+- [x] Owner-confirmed native visual/input review on QMarkdown 1.10.
 
 ## 1 — Useful single-file reader
 
@@ -32,8 +35,9 @@ Exit: open a real document, read/copy comfortably, edit externally and see saved
 - [ ] Define and adopt required qmarkdown public APIs; update the dependency lock and consumer checks together.
 - [ ] Keyboard access to navigation controls and document links, subject to upstream support.
 
-Prerequisites: heading/anchor metadata, location geometry, rendered search/highlighting and update validity contracts.
-These are not available through the current 1.7 public API. No private API workaround is planned.
+QMarkdown 1.10 supplies headings, fragment navigation, literal Find with rendered highlights, navigation rectangles
+and opt-in keyboard link traversal. Integrate these public APIs and define application history/restoration and
+update validity behavior in this milestone. No private API workaround is planned.
 Exit: follow a cross-document heading link, find text, copy it, return to the previous reading position, and reload safely.
 
 ## 3 — Folder browsing and continuity

@@ -30,7 +30,7 @@ Controls.ApplicationWindow {
                 Layout.fillWidth: true
                 text: window.documentSource
                 opacity: 0.7
-                font.pointSize: Qt.application.font.pointSize * 0.85
+                font.pointSize: window.font.pointSize * 0.85
                 elide: Text.ElideMiddle
             }
         }
