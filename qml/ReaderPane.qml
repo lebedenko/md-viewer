@@ -13,6 +13,11 @@ Rectangle {
     readonly property color separatorColor: Qt.alpha(textColor, 0.2)
     readonly property color codeBackgroundColor: Qt.alpha(textColor, 0.07)
     signal copyRequested(string text)
+
+    function resetScroll() {
+        viewport.contentY = 0
+    }
+
     color: paperColor
 
     Flickable {
