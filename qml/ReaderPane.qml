@@ -12,7 +12,22 @@ Rectangle {
     property color selectionColor: "#803b82f6"
     readonly property color separatorColor: Qt.alpha(textColor, 0.2)
     readonly property color codeBackgroundColor: Qt.alpha(textColor, 0.07)
+    property real zoom: 1.0
     signal copyRequested(string text)
+
+    // The renderer has no zoom API: scale the preset's own point sizes through public style properties.
+    MarkdownStyle {
+        id: baseline
+        preset: root.dark ? MarkdownStyle.PolishedDark : MarkdownStyle.PolishedLight
+    }
+
+    function scaledFont(base) {
+        const scaled = Qt.font({
+            "family": base.family, "weight": base.weight, "italic": base.italic,
+            "pointSize": base.pointSize * root.zoom
+        })
+        return scaled
+    }
 
     function resetScroll() {
         viewport.contentY = 0
@@ -46,6 +61,15 @@ Rectangle {
                 h5Color: root.textColor
                 h6Color: root.textColor
                 codeBlockColor: root.textColor
+                bodyFont: root.scaledFont(baseline.bodyFont)
+                codeBlockFont: root.scaledFont(baseline.codeBlockFont)
+                inlineCodeFont: root.scaledFont(baseline.inlineCodeFont)
+                h1Font: root.scaledFont(baseline.h1Font)
+                h2Font: root.scaledFont(baseline.h2Font)
+                h3Font: root.scaledFont(baseline.h3Font)
+                h4Font: root.scaledFont(baseline.h4Font)
+                h5Font: root.scaledFont(baseline.h5Font)
+                h6Font: root.scaledFont(baseline.h6Font)
                 linkColor: root.linkColor
                 selectionBackgroundColor: root.selectionColor
                 headings.h1.separatorColor: root.separatorColor

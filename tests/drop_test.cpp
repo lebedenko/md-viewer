@@ -9,8 +9,10 @@
 #include <QMimeData>
 #include <QQmlComponent>
 #include <QQmlEngine>
+#include <QQuickItem>
 #include <QQuickWindow>
 #include <QTemporaryDir>
+#include <QTest>
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -91,3 +93,34 @@ TEST(ApplicationDrops, AcceptsCopyRequestsAndRejectsUnsupportedDrops) {
 }
 
 QT_WARNING_POP
+
+TEST(ApplicationZoom, KeyboardShortcutsStepAndResetZoom) {
+  qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
+  qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",
+                                      [](QQmlEngine*, QJSEngine*) -> QObject* { return new Clipboard; });
+  QQmlEngine engine;
+  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
+  QQmlComponent component(&engine, QUrl::fromLocalFile(QString::fromUtf8(MD_VIEWER_MAIN_QML)));
+  ASSERT_TRUE(component.isReady()) << component.errorString().toStdString();
+  const std::unique_ptr<QObject> root(component.create());
+  ASSERT_NE(root, nullptr) << component.errorString().toStdString();
+  auto* window = qobject_cast<QQuickWindow*>(root.get());
+  ASSERT_NE(window, nullptr);
+  auto* reader = root->findChild<QQuickItem*>(QStringLiteral("readerPane"));
+  ASSERT_NE(reader, nullptr);
+  QTest::keyClick(window, Qt::Key_0, Qt::ControlModifier);
+  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.0);
+  QTest::keyClick(window, Qt::Key_Equal, Qt::ControlModifier);
+  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.1);
+  QTest::keyClick(window, Qt::Key_Plus, Qt::ControlModifier);
+  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.25);
+  QTest::keyClick(window, Qt::Key_Minus, Qt::ControlModifier);
+  QTest::keyClick(window, Qt::Key_Minus, Qt::ControlModifier);
+  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.0);
+  for (int i = 0; i < 20; ++i) {
+    QTest::keyClick(window, Qt::Key_Minus, Qt::ControlModifier);
+  }
+  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 0.5);
+  QTest::keyClick(window, Qt::Key_0, Qt::ControlModifier);
+  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.0);
+}

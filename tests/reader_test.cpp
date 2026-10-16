@@ -4,10 +4,12 @@
 #include <QClipboard>
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QFont>
 #include <QGuiApplication>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQuickItem>
+#include <QQuickWindow>
 #include <QUrl>
 #include <QVariant>
 
@@ -92,4 +94,34 @@ TEST(ReaderIntegration, CopiesSelectionOfRealDocumentToClipboard) {
     EXPECT_FALSE(copied.contains(QString::fromUtf8(marker))) << marker;
   }
   EXPECT_FALSE(copied.contains(QStringLiteral("wrap across several visual lines when the viewport is narrow,\n")));
+}
+
+TEST(ReaderIntegration, ZoomScalesRenderedHeightAndRestoresAtOne) {
+  QQmlEngine engine;
+  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
+  QQmlComponent component(&engine, QUrl::fromLocalFile(QString::fromUtf8(MD_VIEWER_READER_QML)));
+  ASSERT_TRUE(component.isReady()) << component.errorString().toStdString();
+  const std::unique_ptr<QObject> pane(component.createWithInitialProperties(
+      {{QStringLiteral("width"), 640},
+       {QStringLiteral("markdown"), QStringLiteral("# Title\n\nA paragraph of body text.\n\n```sh\nls -l\n```\n")}}));
+  ASSERT_NE(pane, nullptr) << component.errorString().toStdString();
+  auto* document = pane->findChild<QQuickItem*>(QStringLiteral("markdownDocument"));
+  ASSERT_NE(document, nullptr);
+  QQuickWindow window;
+  window.resize(640, 480);
+  qobject_cast<QQuickItem*>(pane.get())->setParentItem(window.contentItem());
+  window.show();
+  const auto settle = [&window] {
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 200);
+    window.grabWindow();  // forces the layout polish a visible window would get on its next frame
+  };
+  settle();
+  const qreal normal = document->height();
+  ASSERT_GT(normal, 0);
+  ASSERT_TRUE(pane->setProperty("zoom", 2.0));
+  settle();
+  EXPECT_GT(document->height(), normal * 1.3);
+  ASSERT_TRUE(pane->setProperty("zoom", 1.0));
+  settle();
+  EXPECT_NEAR(document->height(), normal, 1.0);
 }

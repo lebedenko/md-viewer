@@ -45,12 +45,13 @@ target_compile_options(md-viewer PRIVATE $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-W
 install(TARGETS md-viewer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if(BUILD_TESTING)
+  find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
   find_package(GTest 1.12 CONFIG REQUIRED)
   add_executable(reader-tests tests/main.cpp tests/reader_test.cpp tests/documentsession_test.cpp tests/drop_test.cpp
     src/documentsession.h src/documentsession.cpp src/clipboard.h src/clipboard.cpp)
   qt_add_resources(reader-tests "application-qml" PREFIX "/qt/qml/MdViewer"
     FILES qml/Main.qml qml/ReaderPane.qml)
-  target_link_libraries(reader-tests PRIVATE GTest::gtest Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent QMarkdown::QMarkdown)
+  target_link_libraries(reader-tests PRIVATE GTest::gtest Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent Qt6::Test QMarkdown::QMarkdown)
   target_include_directories(reader-tests PRIVATE src)
   target_compile_definitions(reader-tests PRIVATE
     MD_VIEWER_MAIN_QML="${CMAKE_CURRENT_SOURCE_DIR}/qml/Main.qml"

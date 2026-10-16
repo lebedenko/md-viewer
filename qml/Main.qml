@@ -1,3 +1,4 @@
+import QtCore
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Dialogs
@@ -25,6 +26,38 @@ Controls.ApplicationWindow {
     Component.onCompleted: {
         if (initialPath)
             session.openPath(initialPath)
+    }
+
+    readonly property var zoomSteps: [0.5, 0.67, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0]
+
+    function stepZoom(direction) {
+        let index = 0
+        for (let i = 0; i < zoomSteps.length; ++i) {
+            if (Math.abs(zoomSteps[i] - settings.zoom) < Math.abs(zoomSteps[index] - settings.zoom))
+                index = i
+        }
+        settings.zoom = zoomSteps[Math.max(0, Math.min(zoomSteps.length - 1, index + direction))]
+    }
+
+    Settings {
+        id: settings
+        category: "reader"
+        property real zoom: 1.0
+    }
+
+    Shortcut {
+        sequences: [StandardKey.ZoomIn, "Ctrl+="]
+        onActivated: window.stepZoom(1)
+    }
+
+    Shortcut {
+        sequences: [StandardKey.ZoomOut]
+        onActivated: window.stepZoom(-1)
+    }
+
+    Shortcut {
+        sequences: ["Ctrl+0"]
+        onActivated: settings.zoom = 1.0
     }
 
     Shortcut {
@@ -94,12 +127,14 @@ Controls.ApplicationWindow {
 
     ReaderPane {
         id: reader
+        objectName: "readerPane"
         anchors.fill: parent
         dark: window.palette.base.hslLightness < 0.5
         paperColor: window.palette.base
         textColor: window.palette.text
         linkColor: window.palette.link
         selectionColor: window.palette.highlight
+        zoom: settings.zoom
         markdown: session.revision === 0 ? window.sampleMarkdown : session.markdown
         onCopyRequested: function(text) { Clipboard.copyText(text) }
     }
