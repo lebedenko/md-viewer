@@ -5,7 +5,6 @@
 
 int main(int argc, char* argv[]) {
   const QGuiApplication app(argc, argv);
-  QCoreApplication::setOrganizationName(QStringLiteral("md-viewer"));
   QCoreApplication::setApplicationName(QStringLiteral("md-viewer"));
   QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0"));
   QCommandLineParser parser;

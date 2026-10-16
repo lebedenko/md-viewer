@@ -10,6 +10,7 @@ include(CTest)
 
 # Dependency acquisition is explicit; configuration never accesses the network.
 find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Concurrent)
+find_package(tomlplusplus 3 CONFIG REQUIRED)
 find_package(QMarkdown 1.10 CONFIG REQUIRED)
 if(QMarkdown_VERSION VERSION_GREATER_EQUAL 2.0)
   message(FATAL_ERROR "QMarkdown 2.x requires a reviewed migration; use 1.10 or a compatible 1.x release.")
@@ -27,16 +28,19 @@ qt_standard_project_setup(REQUIRES 6.8)
 qt_add_executable(md-viewer src/main.cpp)
 set_source_files_properties(qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
 set_source_files_properties(qml/ReaderPane.qml PROPERTIES QT_RESOURCE_ALIAS ReaderPane.qml)
+set_source_files_properties(qml/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
 qt_add_qml_module(md-viewer
   URI MdViewer
   VERSION 1.0
   # Shared providers are loaded through the QML engine, not static plugin imports.
   NO_IMPORT_SCAN
-  QML_FILES qml/Main.qml qml/ReaderPane.qml
-  SOURCES src/clipboard.h src/clipboard.cpp src/documentsession.h src/documentsession.cpp
+  QML_FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml
+  SOURCES src/appconfig.h src/appconfig.cpp src/clipboard.h src/clipboard.cpp src/documentsession.h
+    src/documentsession.cpp
   IMPORT_PATH "${QMarkdown_QML_IMPORT_PATH}"
 )
-target_link_libraries(md-viewer PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent QMarkdown::QMarkdown)
+target_link_libraries(md-viewer PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent QMarkdown::QMarkdown
+  tomlplusplus::tomlplusplus)
 target_include_directories(md-viewer PRIVATE src)
 # The explicitly selected installed provider is also used by local runs.
 # Distributors should use their final system prefix and deploy its QML module.
@@ -47,11 +51,12 @@ install(TARGETS md-viewer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 if(BUILD_TESTING)
   find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
   find_package(GTest 1.12 CONFIG REQUIRED)
-  add_executable(reader-tests tests/main.cpp tests/reader_test.cpp tests/documentsession_test.cpp tests/drop_test.cpp
-    src/documentsession.h src/documentsession.cpp src/clipboard.h src/clipboard.cpp)
+  add_executable(reader-tests tests/main.cpp tests/reader_test.cpp tests/documentsession_test.cpp tests/drop_test.cpp tests/appconfig_test.cpp
+    src/appconfig.h src/appconfig.cpp src/documentsession.h src/documentsession.cpp src/clipboard.h src/clipboard.cpp)
   qt_add_resources(reader-tests "application-qml" PREFIX "/qt/qml/MdViewer"
-    FILES qml/Main.qml qml/ReaderPane.qml)
-  target_link_libraries(reader-tests PRIVATE GTest::gtest Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent Qt6::Test QMarkdown::QMarkdown)
+    FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml)
+  target_link_libraries(reader-tests PRIVATE GTest::gtest Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent Qt6::Test QMarkdown::QMarkdown
+    tomlplusplus::tomlplusplus)
   target_include_directories(reader-tests PRIVATE src)
   target_compile_definitions(reader-tests PRIVATE
     MD_VIEWER_MAIN_QML="${CMAKE_CURRENT_SOURCE_DIR}/qml/Main.qml"

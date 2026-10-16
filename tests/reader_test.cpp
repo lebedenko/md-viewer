@@ -1,3 +1,4 @@
+#include "appconfig.h"
 #include "clipboard.h"
 #include "documentsession.h"
 
@@ -60,6 +61,7 @@ TEST(ReaderIntegration, RendersGfmExtensionsWithoutRawMarkers) {
 
 TEST(ReaderIntegration, CopiesSelectionOfRealDocumentToClipboard) {
   qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
+  qmlRegisterType<AppConfig>("MdViewer", 1, 0, "AppConfig");
   qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",
                                       [](QQmlEngine*, QJSEngine*) -> QObject* { return new Clipboard; });
   QQmlEngine engine;

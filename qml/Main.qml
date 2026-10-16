@@ -1,4 +1,3 @@
-import QtCore
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Dialogs
@@ -33,10 +32,10 @@ Controls.ApplicationWindow {
     function stepZoom(direction) {
         let index = 0
         for (let i = 0; i < zoomSteps.length; ++i) {
-            if (Math.abs(zoomSteps[i] - settings.zoom) < Math.abs(zoomSteps[index] - settings.zoom))
+            if (Math.abs(zoomSteps[i] - config.zoom) < Math.abs(zoomSteps[index] - config.zoom))
                 index = i
         }
-        settings.zoom = zoomSteps[Math.max(0, Math.min(zoomSteps.length - 1, index + direction))]
+        config.zoom = zoomSteps[Math.max(0, Math.min(zoomSteps.length - 1, index + direction))]
     }
 
     readonly property var widthPresets: [
@@ -46,15 +45,12 @@ Controls.ApplicationWindow {
     ]
 
     function cycleWidth() {
-        settings.widthPreset = (Math.max(0, Math.min(widthPresets.length - 1, settings.widthPreset)) + 1)
+        config.widthPreset = (Math.max(0, Math.min(widthPresets.length - 1, config.widthPreset)) + 1)
             % widthPresets.length
     }
 
-    Settings {
-        id: settings
-        category: "reader"
-        property real zoom: 1.0
-        property int widthPreset: 1
+    AppConfig {
+        id: config
     }
 
     Shortcut {
@@ -74,12 +70,24 @@ Controls.ApplicationWindow {
 
     Shortcut {
         sequences: ["Ctrl+0"]
-        onActivated: settings.zoom = 1.0
+        onActivated: config.zoom = 1.0
     }
 
     Shortcut {
         sequences: [StandardKey.Open]
         onActivated: openDialog.open()
+    }
+
+    Shortcut {
+        sequences: [StandardKey.Preferences, "Ctrl+,"]
+        onActivated: settingsDialog.open()
+    }
+
+    SettingsDialog {
+        id: settingsDialog
+        objectName: "settingsDialog"
+        appConfig: config
+        widthPresets: window.widthPresets
     }
 
     FileDialog {
@@ -119,6 +127,13 @@ Controls.ApplicationWindow {
                 text: qsTr("Open…")
                 onClicked: openDialog.open()
             }
+            Controls.ToolButton {
+                objectName: "settingsButton"
+                text: qsTr("Settings")
+                Controls.ToolTip.text: qsTr("Settings (Ctrl+,)")
+                Controls.ToolTip.visible: hovered
+                onClicked: settingsDialog.open()
+            }
         }
     }
 
@@ -151,9 +166,9 @@ Controls.ApplicationWindow {
         textColor: window.palette.text
         linkColor: window.palette.link
         selectionColor: window.palette.highlight
-        zoom: settings.zoom
+        zoom: config.zoom
         maxColumnWidth: window.widthPresets[Math.max(0, Math.min(window.widthPresets.length - 1,
-                                                                  settings.widthPreset))].width
+                                                                  config.widthPreset))].width
         markdown: session.revision === 0 ? window.sampleMarkdown : session.markdown
         onCopyRequested: function(text) { Clipboard.copyText(text) }
     }

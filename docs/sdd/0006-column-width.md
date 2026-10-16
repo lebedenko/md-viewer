@@ -17,7 +17,7 @@ The reading column is fixed at 800 logical px. The reader can cycle Narrow (600)
 ## Design and decisions
 
 - `ReaderPane.maxColumnWidth` replaces the hard-coded 800. `Main.qml` stores the preset index in
-  `QtCore.Settings` (`reader/widthPreset`), clamped when read.
+  `QtCore.Settings`; since [0007](0007-toml-config.md) it is `reader.column_width` in the TOML configuration.
 
 ## Acceptance criteria
 

@@ -18,7 +18,7 @@ One executable owns its MdViewer QML module. Main composes the window and maps t
 ReaderPane. ReaderPane owns its viewport, rendering style, selection enablement and code-copy controls.
 Main also provides a header/footer frame; ReaderPane selects qmarkdown's Polished preset from the system theme,
 keeps palette-bound color overrides and enables all GFM extensions.
-Clipboard owns the operating-system clipboard write. With no file argument the initial document is bundled text. `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003.
+`AppConfig` reads and atomically writes the TOML preferences (zoom, column width); `SettingsDialog` edits them (SDD 0008). Clipboard owns the operating-system clipboard write. With no file argument the initial document is bundled text. `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003.
 Images remain denied by qmarkdown's default resource policy. Link navigation is not implemented in the scaffold.
 Standard runtime Controls allow user-selected installed styles without a direct dependency on any specific style.
 
@@ -52,7 +52,7 @@ Keep logical document position, selection state and viewport offset distinct.
 - Resolve local image permissions against the opened file/folder scope. Remote resources require a deliberate policy.
 - Use one renderer-supported rendered-text coordinate system for search/selection; source offsets are distinct.
 - Decide anchor slugging, duplicate-heading behavior and location lifetime with the upstream API.
-- Use Qt settings initially if simple preferences suffice; add TOML only with an approved configuration requirement.
+- Preferences live in a TOML file (`AppConfig`, SDD 0007): `$XDG_CONFIG_HOME/md-viewer/config.toml`, else `~/.config/md-viewer.toml`.
 
 ## Renderer prerequisites
 

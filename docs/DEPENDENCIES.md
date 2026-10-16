@@ -11,7 +11,7 @@ Dependency ownership does not change this rule: qmarkdown is a third-party packa
 | Qt | Production | find_package(Qt6 ...); Qt6::* | Minimum 6.8; initial CI SDK 6.8.3 |
 | qmarkdown | Production | find_package(QMarkdown 1.10 CONFIG REQUIRED); QMarkdown::QMarkdown | Compatible 1.x; reproducible preparation pins 1.10.0 commit + SHA-256 |
 | GTest | Tests only | find_package(GTest 1.12 CONFIG REQUIRED); GTest::gtest | Distro/dev package; excluded with BUILD_TESTING=OFF |
-| tomlplusplus | Not currently needed | Future find_package(tomlplusplus CONFIG REQUIRED); tomlplusplus::tomlplusplus | Add only with an actual TOML consumer |
+| tomlplusplus | Production (application configuration) | find_package(tomlplusplus 3 CONFIG REQUIRED); tomlplusplus::tomlplusplus | Header-only distro package (`tomlplusplus`, `libtomlplusplus-dev`); no pinned preparation |
 
 Use distro packages for common development dependencies. For an unavailable provider, explicitly build/install a pinned
 upstream release into a local prefix. CMAKE_PREFIX_PATH selects that prefix; never modify the global system as a build step.

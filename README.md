@@ -17,7 +17,7 @@ Qt QML development tools (`qmllint`) and runtime Controls modules must be availa
 On Arch Linux, install prerequisites explicitly with your package manager:
 
 ```sh
-sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative gtest clang python go-task
+sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative gtest tomlplusplus clang python go-task
 ```
 
 Then prepare the external renderer and verify the application:

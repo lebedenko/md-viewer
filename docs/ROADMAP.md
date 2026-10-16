@@ -23,6 +23,8 @@ Complete; local, hosted-main and owner-confirmed native evidence is recorded in
 - [x] Selection/copy and code-copy behavior exercised on real documents.
 - [x] Keyboard zoom ([0005](sdd/0005-zoom.md)).
 - [x] Column width presets ([0006](sdd/0006-column-width.md)).
+- [x] TOML application configuration, XDG location ([0007](sdd/0007-toml-config.md)).
+- [x] Toolbar settings button and modal settings window ([0008](sdd/0008-settings-window.md)).
 - [ ] Small typography preferences; light/dark override.
 - [ ] Live reload through ordinary and atomic saves, with proportional position preservation.
 - [ ] Configured external editor action; safe argument handling and failure feedback.
