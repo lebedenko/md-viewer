@@ -20,7 +20,7 @@ Complete; local, hosted-main and owner-confirmed native evidence is recorded in
 ## 1 — Useful single-file reader
 
 - [x] Open local Markdown from CLI and file dialog; explicit encoding/error behavior.
-- [ ] Selection/copy and code-copy behavior exercised on real documents.
+- [x] Selection/copy and code-copy behavior exercised on real documents.
 - [ ] Zoom, comfortable width and small typography preferences; light/dark palette behavior.
 - [ ] Live reload through ordinary and atomic saves, with proportional position preservation.
 - [ ] Configured external editor action; safe argument handling and failure feedback.

@@ -55,6 +55,7 @@ if(BUILD_TESTING)
   target_compile_definitions(reader-tests PRIVATE
     MD_VIEWER_MAIN_QML="${CMAKE_CURRENT_SOURCE_DIR}/qml/Main.qml"
     MD_VIEWER_READER_QML="${CMAKE_CURRENT_SOURCE_DIR}/qml/ReaderPane.qml"
+    MD_VIEWER_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/tests/data"
     MD_VIEWER_QMARKDOWN_IMPORT_PATH="${QMarkdown_QML_IMPORT_PATH}")
   include(GoogleTest)
   gtest_discover_tests(reader-tests DISCOVERY_MODE PRE_TEST
