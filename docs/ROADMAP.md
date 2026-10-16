@@ -22,7 +22,8 @@ Complete; local, hosted-main and owner-confirmed native evidence is recorded in
 - [x] Open local Markdown from CLI and file dialog; explicit encoding/error behavior.
 - [x] Selection/copy and code-copy behavior exercised on real documents.
 - [x] Keyboard zoom ([0005](sdd/0005-zoom.md)).
-- [ ] Comfortable width and small typography preferences; light/dark palette behavior.
+- [x] Column width presets ([0006](sdd/0006-column-width.md)).
+- [ ] Small typography preferences; light/dark override.
 - [ ] Live reload through ordinary and atomic saves, with proportional position preservation.
 - [ ] Configured external editor action; safe argument handling and failure feedback.
 - [ ] Conventional keyboard shortcuts and visible focus.

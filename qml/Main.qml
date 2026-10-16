@@ -39,10 +39,27 @@ Controls.ApplicationWindow {
         settings.zoom = zoomSteps[Math.max(0, Math.min(zoomSteps.length - 1, index + direction))]
     }
 
+    readonly property var widthPresets: [
+        { "name": qsTr("Narrow"), "width": 600 },
+        { "name": qsTr("Comfortable"), "width": 800 },
+        { "name": qsTr("Wide"), "width": 1000 }
+    ]
+
+    function cycleWidth() {
+        settings.widthPreset = (Math.max(0, Math.min(widthPresets.length - 1, settings.widthPreset)) + 1)
+            % widthPresets.length
+    }
+
     Settings {
         id: settings
         category: "reader"
         property real zoom: 1.0
+        property int widthPreset: 1
+    }
+
+    Shortcut {
+        sequences: ["Ctrl+Shift+W"]
+        onActivated: window.cycleWidth()
     }
 
     Shortcut {
@@ -135,6 +152,8 @@ Controls.ApplicationWindow {
         linkColor: window.palette.link
         selectionColor: window.palette.highlight
         zoom: settings.zoom
+        maxColumnWidth: window.widthPresets[Math.max(0, Math.min(window.widthPresets.length - 1,
+                                                                  settings.widthPreset))].width
         markdown: session.revision === 0 ? window.sampleMarkdown : session.markdown
         onCopyRequested: function(text) { Clipboard.copyText(text) }
     }

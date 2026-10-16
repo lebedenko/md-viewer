@@ -13,6 +13,7 @@ Rectangle {
     readonly property color separatorColor: Qt.alpha(textColor, 0.2)
     readonly property color codeBackgroundColor: Qt.alpha(textColor, 0.07)
     property real zoom: 1.0
+    property real maxColumnWidth: 800
     signal copyRequested(string text)
 
     // The renderer has no zoom API: scale the preset's own point sizes through public style properties.
@@ -48,7 +49,7 @@ Rectangle {
             objectName: "markdownDocument"
             x: (viewport.width - width) / 2
             y: 24
-            width: Math.max(0, Math.min(800, viewport.width - 48))
+            width: Math.max(0, Math.min(root.maxColumnWidth, viewport.width - 48))
             selectionEnabled: true
             gfmEnabled: true
             style: MarkdownStyle {

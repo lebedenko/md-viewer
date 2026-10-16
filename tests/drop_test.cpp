@@ -124,3 +124,30 @@ TEST(ApplicationZoom, KeyboardShortcutsStepAndResetZoom) {
   QTest::keyClick(window, Qt::Key_0, Qt::ControlModifier);
   EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.0);
 }
+
+TEST(ApplicationWidth, ShortcutCyclesColumnWidthPresets) {
+  qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
+  qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",
+                                      [](QQmlEngine*, QJSEngine*) -> QObject* { return new Clipboard; });
+  QQmlEngine engine;
+  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
+  QQmlComponent component(&engine, QUrl::fromLocalFile(QString::fromUtf8(MD_VIEWER_MAIN_QML)));
+  ASSERT_TRUE(component.isReady()) << component.errorString().toStdString();
+  const std::unique_ptr<QObject> root(component.create());
+  ASSERT_NE(root, nullptr) << component.errorString().toStdString();
+  auto* window = qobject_cast<QQuickWindow*>(root.get());
+  ASSERT_NE(window, nullptr);
+  auto* reader = root->findChild<QQuickItem*>(QStringLiteral("readerPane"));
+  ASSERT_NE(reader, nullptr);
+  const auto width = [reader] { return reader->property("maxColumnWidth").toDouble(); };
+  const double start = width();
+  QTest::keyClick(window, Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier);
+  const double second = width();
+  QTest::keyClick(window, Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier);
+  const double third = width();
+  QTest::keyClick(window, Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier);
+  EXPECT_NE(start, second);
+  EXPECT_NE(second, third);
+  EXPECT_NE(start, third);
+  EXPECT_DOUBLE_EQ(width(), start);
+}
