@@ -25,11 +25,11 @@ list(APPEND QML_IMPORT_PATH "${QMarkdown_QML_IMPORT_PATH}")
 set(QML_IMPORT_PATH "${QML_IMPORT_PATH}" CACHE STRING "Additional QML module roots" FORCE)
 qt_standard_project_setup(REQUIRES 6.8)
 
-qt_add_executable(md-viewer src/main.cpp)
+qt_add_executable(mdv src/main.cpp)
 set_source_files_properties(qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
 set_source_files_properties(qml/ReaderPane.qml PROPERTIES QT_RESOURCE_ALIAS ReaderPane.qml)
 set_source_files_properties(qml/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
-qt_add_qml_module(md-viewer
+qt_add_qml_module(mdv
   URI MdViewer
   VERSION 1.0
   # Shared providers are loaded through the QML engine, not static plugin imports.
@@ -39,14 +39,21 @@ qt_add_qml_module(md-viewer
     src/documentsession.cpp
   IMPORT_PATH "${QMarkdown_QML_IMPORT_PATH}"
 )
-target_link_libraries(md-viewer PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent QMarkdown::QMarkdown
+target_link_libraries(mdv PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent QMarkdown::QMarkdown
   tomlplusplus::tomlplusplus)
-target_include_directories(md-viewer PRIVATE src)
+target_include_directories(mdv PRIVATE src)
 # The explicitly selected installed provider is also used by local runs.
 # Distributors should use their final system prefix and deploy its QML module.
-target_compile_definitions(md-viewer PRIVATE MD_VIEWER_QMARKDOWN_IMPORT_PATH="${QMarkdown_QML_IMPORT_PATH}")
-target_compile_options(md-viewer PRIVATE $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>)
-install(TARGETS md-viewer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+target_compile_definitions(mdv PRIVATE MD_VIEWER_QMARKDOWN_IMPORT_PATH="${QMarkdown_QML_IMPORT_PATH}")
+target_compile_options(mdv PRIVATE $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>)
+qt_add_resources(mdv "application-icon" PREFIX "/" FILES assets/mdv.svg)
+set_target_properties(mdv PROPERTIES INSTALL_RPATH "$<TARGET_FILE_DIR:QMarkdown::QMarkdown>")
+install(FILES assets/mdv.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+install(FILES assets/mdv.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+configure_file(cmake/RefreshDesktopCaches.cmake.in RefreshDesktopCaches.cmake @ONLY)
+install(TARGETS mdv RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/RefreshDesktopCaches.cmake")
 
 if(BUILD_TESTING)
   find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
@@ -66,7 +73,7 @@ if(BUILD_TESTING)
   include(GoogleTest)
   gtest_discover_tests(reader-tests DISCOVERY_MODE PRE_TEST
     PROPERTIES TIMEOUT 15 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Fusion;QT_QPA_PLATFORMTHEME=")
-  add_test(NAME application-startup COMMAND md-viewer --smoke-test)
+  add_test(NAME application-startup COMMAND mdv --smoke-test)
   set_tests_properties(application-startup PROPERTIES TIMEOUT 15
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software;QT_QUICK_CONTROLS_STYLE=Fusion;QT_QPA_PLATFORMTHEME=")
 endif()

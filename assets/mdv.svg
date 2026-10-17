@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+<title>md-viewer</title>
+<defs>
+  <linearGradient id="document" x1="24" y1="12" x2="208" y2="244" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#4CB9EC"/><stop offset="1" stop-color="#3978D8"/>
+  </linearGradient>
+  <linearGradient id="fold" x1="176" y1="12" x2="208" y2="68" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#B0E5FA"/><stop offset="1" stop-color="#79C9F1"/>
+  </linearGradient>
+</defs>
+<path d="M40 12 H176 L232 68 V228 Q232 244 216 244 H40 Q24 244 24 228 V28 Q24 12 40 12 Z" fill="url(#document)"/>
+<path d="M176 12 L232 68 H190 Q176 68 176 54 Z" fill="url(#fold)"/>
+<path d="M52 178 V106 H72 L94 134 L116 106 H136 V178 H116 V138 L94 166 L72 138 V178 Z
+         M166 106 H188 V148 H206 L177 180 L148 148 H166 Z" fill="#FFFFFF"/>
+</svg>

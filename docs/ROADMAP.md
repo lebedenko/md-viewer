@@ -59,7 +59,8 @@ No database or persistent content index initially. Folder browsing is not a proj
 - [ ] Accessibility/focus review and native scaling/light/dark checks.
 - [ ] Adopt extension renderers only for justified document needs; no requirement to wait for all qmarkdown v2 features.
 - [ ] Choose application license and stable application identity.
-- [ ] Desktop/MIME metadata and a tested installation/package story.
+- [x] Desktop/MIME metadata and system/local installation ([0010](sdd/0010-desktop-installation.md)).
+- [ ] Release package story and clean-system qualification.
 - [ ] Document supported environment and missing capabilities before a first downloadable release.
 
 Streaming is not a blocker for local-file reading. PDF export, graphs, AI, Git UI, sync and built-in editing are not planned.

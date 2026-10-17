@@ -7,7 +7,7 @@ GTest, clang-format/clang-tidy 18 and the locked qmarkdown source. GitHub action
 Dependencies are prepared explicitly before `python3 scripts/check.py` (the same command as `task check`).
 
 Checks: C++ formatting, Debug configure/build, CTest, qmllint, clang-tidy, Release build, application-only staging and
-staged offscreen startup. Missing tools/dependencies fail rather than silently skipping checks.
+desktop validation, repeated system/local DESTDIR installs, cache failure propagation and staged CLI/offscreen startup. Missing tools/dependencies fail rather than silently skipping checks.
 Failed runs upload test/configure logs; successful runs upload the staged application for short-lived inspection.
 Artifacts are development outputs tied to the selected Qt/qmarkdown stack, not portable release packages.
 
@@ -27,10 +27,13 @@ The SDD records why and what; the diff and checks demonstrate the implementation
 Use Conventional Commits. Keep main buildable. Dependency/security upkeep is configured in `.github/dependabot.yml`
 for GitHub Actions; review proposed upgrades and run the same checks.
 
+Desktop installation is implemented in [SDD 0010](sdd/0010-desktop-installation.md). Native launcher/icon/file-manager
+review remains separate from offscreen acceptance.
+
 ## Delivery
 
 No automatic release publishing or repository creation is configured. Early delivery is a passing main branch plus
-CI artifacts. Before the first public binary release: choose a license and app ID, implement desktop metadata, verify
+CI artifacts. Before the first public binary release: choose a license and stable app ID, verify
 package dependency ownership/runtime discovery, and exercise install/uninstall on a clean supported system.
 
 Then add a manual release workflow that validates a selected commit, builds tested packages and creates a draft release.

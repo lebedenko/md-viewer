@@ -14,7 +14,7 @@ src/main.cpp -> QML engine -> Main.qml -> ReaderPane.qml -> QMarkdown 1.10
                                   + Clipboard <- copy requests
 ```
 
-One executable owns its MdViewer QML module. Main composes the window and maps the effective Qt palette to
+The `mdv` executable owns its MdViewer QML module. Main composes the window and maps the effective Qt palette to
 ReaderPane. ReaderPane owns its viewport, rendering style, selection enablement and code-copy controls.
 Main also provides a header/footer frame; ReaderPane selects qmarkdown's Polished preset from the system theme,
 keeps palette-bound color overrides and enables all GFM extensions.
@@ -24,7 +24,7 @@ Standard runtime Controls allow user-selected installed styles without a direct 
 
 The CMake project consumes installed shared QMarkdown. BUILD_TESTING adds GTest; Release needs no GTest.
 The renderer import directory comes from the selected package, not a source checkout.
-The installed app currently records that provider path; a package distributor must build against its final
+The installed app records that provider QML path and library directory (install RPATH); a package distributor must build against its final
 provider prefix. Relocatable bundles and static-provider deployment are future packaging work.
 
 ## Planned application boundaries
@@ -76,3 +76,8 @@ Share qmarkdown with other applications. Extract reader/controller libraries onl
 GTest checks renderer integration and later application behavior. Offscreen startup catches QML/import failures;
 qmllint checks QML statically. Native keyboard, selection, scrolling, light/dark and scaling checks remain manual.
 Run clean-environment acceptance without HoloNight plugins/configuration and use public Qt APIs throughout.
+
+
+Desktop installation uses relative GNUInstallDirs destinations for mdv, its desktop launcher and scalable icon.
+Qt sets desktopFileName to mdv and embeds the same SVG as its window icon. System and local Release installation
+are described in [SDD 0010](sdd/0010-desktop-installation.md); dependencies remain external.

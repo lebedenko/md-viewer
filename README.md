@@ -13,7 +13,7 @@ There is no HoloNight dependency, embedded editor, or Vim interaction layer.
 
 Prerequisites: CMake >=3.25, Ninja, a C++23 compiler, Qt >=6.8 development packages
 (Core, Gui, Qml, Quick, QuickControls2, Network), Python >=3.12, and GTest >=1.12.
-Install clang-format, clang-tidy and optionally [Task](https://taskfile.dev/).
+Install clang-format, clang-tidy, desktop-file-utils (for desktop-file-validate) and optionally [Task](https://taskfile.dev/).
 Qt QML development tools (`qmllint`) and runtime Controls modules must be available.
 
 On Arch Linux, install prerequisites explicitly with your package manager:
@@ -35,7 +35,7 @@ Task is a convenience wrapper. Equivalent essentials:
 ```sh
 python3 scripts/deps.py
 python3 scripts/check.py
-build/debug/md-viewer
+build/debug/mdv
 ```
 
 `task deps -- --archive /path/to/archive.tar.gz` prepares from an offline archive and still verifies its checksum.
@@ -53,7 +53,7 @@ ctest --preset debug
 
 See [dependency policy](docs/DEPENDENCIES.md) for runtime QML discovery and system-package use.
 `task stage` installs only the app under `build/install`; this is not a self-contained distribution.
-Application licensing and distribution metadata remain decisions for the first packaging milestone.
+Application licensing and release packaging remain decisions for the first packaging milestone.
 
 ## Common commands
 
@@ -80,3 +80,46 @@ No machine-specific paths or HoloNight runtime imports are carried over.
 - [CI and delivery](docs/CI.md): one validation job and manual early delivery policy.
 - [Mockup notes](docs/mockups/README.md): visual references, not a feature contract.
 - [Agent instructions](AGENTS.md): project-specific collaboration rules.
+
+
+## Desktop installation
+
+`task install` builds Release as the current user, then uses sudo only to install into `/usr`.
+`task install:local` builds Release and installs into `~/.local` without sudo.
+Equivalent commands:
+
+```sh
+cmake --preset release
+cmake --build --preset release
+sudo cmake --install build/release --prefix /usr
+# Or, for the current user:
+cmake --install build/release --prefix "$HOME/.local"
+```
+
+Each prefix receives `bin/mdv`, `share/applications/mdv.desktop` and
+`share/icons/hicolor/scalable/apps/mdv.svg`. `task stage` uses `build/install`.
+Desktop and icon caches are refreshed when the corresponding utilities are available; utility failures fail installation.
+Ensure `~/.local/bin` is on the **desktop session's PATH** for local launcher/file-manager use.
+
+Qt runtime libraries, platform and Quick Controls plugins, the Qt SVG icon plugin (normally supplied by Qt SVG,
+for example Arch's `qt6-svg`), and the selected shared QMarkdown library/QML module must remain installed.
+The executable records the selected QMarkdown library directory in its install RPATH and its QML import root.
+This is an application-only install, not a relocatable bundle.
+The display name stays “Markdown Viewer”; the QML module and existing configuration paths stay unchanged.
+No default MIME associations are changed. No `md-viewer` alias is installed, and older installations are not removed.
+
+
+If Qt reports `Could not register app ID: App info not found for 'mdv'` after a local install,
+check the desktop service environment with
+`systemctl --user show-environment | grep '^PATH='`. GLib rejects a desktop entry when its Exec executable
+cannot be found in that process's PATH, even when the desktop file exists.
+A terminal-only PATH addition does not update an already running portal.
+For the current systemd user session, run from a terminal where `mdv` resolves:
+
+```sh
+systemctl --user import-environment PATH
+systemctl --user restart xdg-desktop-portal.service
+```
+
+For subsequent logins, include `~/.local/bin` in your desktop session's startup environment, then log out and back in.
+These commands change the running user-service environment; installation does not apply them automatically.

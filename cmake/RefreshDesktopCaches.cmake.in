@@ -1,0 +1,13 @@
+# Respect both --prefix and packaging/staging roots. Missing tools are optional;
+# failures from available tools must fail installation.
+set(data_dir "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@CMAKE_INSTALL_DATADIR@")
+find_program(desktop_database_tool update-desktop-database)
+if(desktop_database_tool)
+  execute_process(COMMAND "${desktop_database_tool}" "${data_dir}/applications"
+    COMMAND_ERROR_IS_FATAL ANY)
+endif()
+find_program(icon_cache_tool gtk-update-icon-cache)
+if(icon_cache_tool)
+  execute_process(COMMAND "${icon_cache_tool}" --force --ignore-theme-index "${data_dir}/icons/hicolor"
+    COMMAND_ERROR_IS_FATAL ANY)
+endif()

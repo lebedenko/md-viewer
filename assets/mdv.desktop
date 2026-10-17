@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Markdown Viewer
+Exec=mdv %f
+Icon=mdv
+Terminal=false
+Categories=Utility;Viewer;
+MimeType=text/markdown;

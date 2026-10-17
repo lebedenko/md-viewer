@@ -14,12 +14,13 @@ tasks:
     desc: Configure and build the selected preset
     cmds:
       - task: configure
+        vars: {PRESET: "{{.PRESET}}"}
       - cmake --build --preset {{.PRESET}}
   run:
     desc: Build and run the application
     cmds:
       - task: build
-      - build/{{.PRESET}}/md-viewer {{.CLI_ARGS}}
+      - build/{{.PRESET}}/mdv {{.CLI_ARGS}}
   test:
     desc: Build Debug and run CTest
     cmds:
@@ -56,4 +57,16 @@ tasks:
     cmds:
       - task: build
         vars: {PRESET: release}
-      - cmake --install build/release
+      - cmake --install build/release --prefix "{{.ROOT_DIR}}/build/install"
+  install:
+    desc: Build Release as the current user and install into /usr with sudo
+    cmds:
+      - task: build
+        vars: {PRESET: release}
+      - sudo cmake --install build/release --prefix /usr
+  install:local:
+    desc: Build Release and install into ~/.local without sudo
+    cmds:
+      - task: build
+        vars: {PRESET: release}
+      - cmake --install build/release --prefix "$HOME/.local"

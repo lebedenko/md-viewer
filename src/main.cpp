@@ -1,11 +1,15 @@
 #include <QCommandLineParser>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QTimer>
 
 int main(int argc, char* argv[]) {
   const QGuiApplication app(argc, argv);
-  QCoreApplication::setApplicationName(QStringLiteral("md-viewer"));
+  QCoreApplication::setApplicationName(QStringLiteral("mdv"));
+  QGuiApplication::setApplicationDisplayName(QStringLiteral("Markdown Viewer"));
+  QGuiApplication::setDesktopFileName(QStringLiteral("mdv"));
+  QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/assets/mdv.svg")));
   QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0"));
   QCommandLineParser parser;
   parser.setApplicationDescription(QStringLiteral("A local Markdown reader"));
