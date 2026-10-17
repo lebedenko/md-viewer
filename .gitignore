@@ -9,7 +9,6 @@
 /.task/
 __pycache__/
 *.pyc
-/tests/data/
 # Editor and machine-local agent state
 .idea/
 .vscode/

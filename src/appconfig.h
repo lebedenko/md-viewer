@@ -4,13 +4,15 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QTimer>
 #include <QtQml/qqmlregistration.h>
 
 #include <expected>
 
-// TOML application configuration. The file is read once at construction; changes are written through immediately.
+// TOML application configuration. The file is read once at construction; changes are persisted after a short debounce.
 class AppConfig : public QObject {
   Q_OBJECT
+  Q_DISABLE_COPY_MOVE(AppConfig)
   QML_ELEMENT
   Q_PROPERTY(double zoom READ zoom WRITE setZoom NOTIFY zoomChanged)
   Q_PROPERTY(int widthPreset READ widthPreset WRITE setWidthPreset NOTIFY widthPresetChanged)
@@ -18,13 +20,18 @@ class AppConfig : public QObject {
   Q_PROPERTY(QString error READ error NOTIFY errorChanged)
 
  public:
+  // Unscoped int values preserve the integer property and the QML AppConfig.Narrow API.
+  // NOLINTNEXTLINE(cppcoreguidelines-use-enum-class, performance-enum-size)
+  enum WidthPreset : int { Narrow = 0, Comfortable = 1, Wide = 2 };
+  Q_ENUM(WidthPreset)
+
   static constexpr double kMinZoom = 0.5;
   static constexpr double kMaxZoom = 3.0;
   static constexpr int kWidthPresetCount = 3;  // narrow, comfortable, wide
 
   struct Values {
     double zoom = 1.0;
-    int width_preset = 1;
+    int width_preset = Comfortable;
     QStringList warnings;  // unknown keys and invalid values; the file is still usable
   };
 
@@ -35,6 +42,9 @@ class AppConfig : public QObject {
 
   explicit AppConfig(QObject* parent = nullptr);
   explicit AppConfig(const QStringList& candidates, QObject* parent = nullptr);
+
+  ~AppConfig() override;
+  bool flush();
 
   [[nodiscard]] double zoom() const { return values_.zoom; }
   [[nodiscard]] int widthPreset() const { return values_.width_preset; }
@@ -50,9 +60,12 @@ class AppConfig : public QObject {
 
  private:
   void load(const QStringList& candidates);
-  void save();
+  bool save();
+  void scheduleSave();
   void setError(const QString& error);
 
+  QTimer save_timer_;
+  bool pending_ = false;
   Values values_;
   QString path_;
   QString error_;

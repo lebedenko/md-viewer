@@ -62,8 +62,8 @@ Controls.Dialog {
                 Layout.fillWidth: true
                 Layout.columnSpan: 2
                 model: root.widthPresets.map(preset => preset.name)
-                currentIndex: root.appConfig.widthPreset
-                onActivated: index => root.appConfig.widthPreset = index
+                currentIndex: root.widthPresets.findIndex(preset => preset.value === root.appConfig.widthPreset)
+                onActivated: index => root.appConfig.widthPreset = root.widthPresets[index].value
             }
         }
 

@@ -39,14 +39,15 @@ Controls.ApplicationWindow {
     }
 
     readonly property var widthPresets: [
-        { "name": qsTr("Narrow"), "width": 600 },
-        { "name": qsTr("Comfortable"), "width": 800 },
-        { "name": qsTr("Wide"), "width": 1000 }
+        { "value": AppConfig.Narrow, "name": qsTr("Narrow"), "width": 600 },
+        { "value": AppConfig.Comfortable, "name": qsTr("Comfortable"), "width": 800 },
+        { "value": AppConfig.Wide, "name": qsTr("Wide"), "width": 1000 }
     ]
 
+    readonly property int widthPresetIndex: Math.max(0, widthPresets.findIndex(preset => preset.value === config.widthPreset))
+
     function cycleWidth() {
-        config.widthPreset = (Math.max(0, Math.min(widthPresets.length - 1, config.widthPreset)) + 1)
-            % widthPresets.length
+        config.widthPreset = widthPresets[(widthPresetIndex + 1) % widthPresets.length].value
     }
 
     AppConfig {
@@ -167,8 +168,7 @@ Controls.ApplicationWindow {
         linkColor: window.palette.link
         selectionColor: window.palette.highlight
         zoom: config.zoom
-        maxColumnWidth: window.widthPresets[Math.max(0, Math.min(window.widthPresets.length - 1,
-                                                                  config.widthPreset))].width
+        maxColumnWidth: window.widthPresets[window.widthPresetIndex].width
         markdown: session.revision === 0 ? window.sampleMarkdown : session.markdown
         onCopyRequested: function(text) { Clipboard.copyText(text) }
     }

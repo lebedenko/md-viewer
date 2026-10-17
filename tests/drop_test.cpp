@@ -1,4 +1,5 @@
 #include "appconfig.h"
+#include "application_harness.h"
 #include "clipboard.h"
 #include "documentsession.h"
 
@@ -22,16 +23,9 @@
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 TEST(ApplicationDrops, AcceptsCopyRequestsAndRejectsUnsupportedDrops) {
-  qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
-  qmlRegisterType<AppConfig>("MdViewer", 1, 0, "AppConfig");
-  qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",
-                                      [](QQmlEngine*, QJSEngine*) -> QObject* { return new Clipboard; });
-  QQmlEngine engine;
-  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
-  QQmlComponent component(&engine, QUrl::fromLocalFile(QString::fromUtf8(MD_VIEWER_MAIN_QML)));
-  ASSERT_TRUE(component.isReady()) << component.errorString().toStdString();
-  const std::unique_ptr<QObject> root(component.create());
-  ASSERT_NE(root, nullptr) << component.errorString().toStdString();
+  ApplicationHarness harness;
+  const auto& root = harness.root;
+  ASSERT_NE(root, nullptr) << harness.error.toStdString();
   auto* window = qobject_cast<QQuickWindow*>(root.get());
   ASSERT_NE(window, nullptr);
   auto* session = root->findChild<DocumentSession*>();
@@ -95,102 +89,3 @@ TEST(ApplicationDrops, AcceptsCopyRequestsAndRejectsUnsupportedDrops) {
 }
 
 QT_WARNING_POP
-
-TEST(ApplicationZoom, KeyboardShortcutsStepAndResetZoom) {
-  qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
-  qmlRegisterType<AppConfig>("MdViewer", 1, 0, "AppConfig");
-  qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",
-                                      [](QQmlEngine*, QJSEngine*) -> QObject* { return new Clipboard; });
-  QQmlEngine engine;
-  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
-  QQmlComponent component(&engine, QUrl::fromLocalFile(QString::fromUtf8(MD_VIEWER_MAIN_QML)));
-  ASSERT_TRUE(component.isReady()) << component.errorString().toStdString();
-  const std::unique_ptr<QObject> root(component.create());
-  ASSERT_NE(root, nullptr) << component.errorString().toStdString();
-  auto* window = qobject_cast<QQuickWindow*>(root.get());
-  ASSERT_NE(window, nullptr);
-  auto* reader = root->findChild<QQuickItem*>(QStringLiteral("readerPane"));
-  ASSERT_NE(reader, nullptr);
-  QTest::keyClick(window, Qt::Key_0, Qt::ControlModifier);
-  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.0);
-  QTest::keyClick(window, Qt::Key_Equal, Qt::ControlModifier);
-  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.1);
-  QTest::keyClick(window, Qt::Key_Plus, Qt::ControlModifier);
-  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.25);
-  QTest::keyClick(window, Qt::Key_Minus, Qt::ControlModifier);
-  QTest::keyClick(window, Qt::Key_Minus, Qt::ControlModifier);
-  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.0);
-  for (int i = 0; i < 20; ++i) {
-    QTest::keyClick(window, Qt::Key_Minus, Qt::ControlModifier);
-  }
-  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 0.5);
-  QTest::keyClick(window, Qt::Key_0, Qt::ControlModifier);
-  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.0);
-}
-
-TEST(ApplicationWidth, ShortcutCyclesColumnWidthPresets) {
-  qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
-  qmlRegisterType<AppConfig>("MdViewer", 1, 0, "AppConfig");
-  qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",
-                                      [](QQmlEngine*, QJSEngine*) -> QObject* { return new Clipboard; });
-  QQmlEngine engine;
-  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
-  QQmlComponent component(&engine, QUrl::fromLocalFile(QString::fromUtf8(MD_VIEWER_MAIN_QML)));
-  ASSERT_TRUE(component.isReady()) << component.errorString().toStdString();
-  const std::unique_ptr<QObject> root(component.create());
-  ASSERT_NE(root, nullptr) << component.errorString().toStdString();
-  auto* window = qobject_cast<QQuickWindow*>(root.get());
-  ASSERT_NE(window, nullptr);
-  auto* reader = root->findChild<QQuickItem*>(QStringLiteral("readerPane"));
-  ASSERT_NE(reader, nullptr);
-  const auto width = [reader] { return reader->property("maxColumnWidth").toDouble(); };
-  const double start = width();
-  QTest::keyClick(window, Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier);
-  const double second = width();
-  QTest::keyClick(window, Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier);
-  const double third = width();
-  QTest::keyClick(window, Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier);
-  EXPECT_NE(start, second);
-  EXPECT_NE(second, third);
-  EXPECT_NE(start, third);
-  EXPECT_DOUBLE_EQ(width(), start);
-}
-
-TEST(ApplicationSettings, ShortcutOpensModalDialogThatEditsConfigAndEscapeCloses) {
-  qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
-  qmlRegisterType<AppConfig>("MdViewer", 1, 0, "AppConfig");
-  qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",
-                                      [](QQmlEngine*, QJSEngine*) -> QObject* { return new Clipboard; });
-  QQmlEngine engine;
-  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
-  QQmlComponent component(&engine, QUrl::fromLocalFile(QString::fromUtf8(MD_VIEWER_MAIN_QML)));
-  ASSERT_TRUE(component.isReady()) << component.errorString().toStdString();
-  const std::unique_ptr<QObject> root(component.create());
-  ASSERT_NE(root, nullptr) << component.errorString().toStdString();
-  auto* window = qobject_cast<QQuickWindow*>(root.get());
-  ASSERT_NE(window, nullptr);
-  auto* reader = root->findChild<QQuickItem*>(QStringLiteral("readerPane"));
-  auto* dialog = root->findChild<QObject*>(QStringLiteral("settingsDialog"));
-  ASSERT_NE(reader, nullptr);
-  ASSERT_NE(dialog, nullptr);
-  EXPECT_FALSE(dialog->property("visible").toBool());
-  QTest::keyClick(window, Qt::Key_Comma, Qt::ControlModifier);
-  QCoreApplication::processEvents(QEventLoop::AllEvents, 300);
-  EXPECT_TRUE(dialog->property("visible").toBool());
-  EXPECT_TRUE(dialog->property("modal").toBool());
-
-  auto* width_box = dialog->findChild<QObject*>(QStringLiteral("widthBox"));
-  ASSERT_NE(width_box, nullptr);
-  ASSERT_TRUE(QMetaObject::invokeMethod(width_box, "activated", Q_ARG(int, 2)));
-  EXPECT_DOUBLE_EQ(reader->property("maxColumnWidth").toDouble(), 1000.0);
-
-  auto* zoom_slider = dialog->findChild<QObject*>(QStringLiteral("zoomSlider"));
-  ASSERT_NE(zoom_slider, nullptr);
-  ASSERT_TRUE(zoom_slider->setProperty("value", 1.5));
-  ASSERT_TRUE(QMetaObject::invokeMethod(zoom_slider, "moved"));
-  EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.5);
-
-  QTest::keyClick(window, Qt::Key_Escape);
-  QCoreApplication::processEvents(QEventLoop::AllEvents, 300);
-  EXPECT_FALSE(dialog->property("visible").toBool());
-}

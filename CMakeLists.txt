@@ -51,7 +51,7 @@ install(TARGETS md-viewer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 if(BUILD_TESTING)
   find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
   find_package(GTest 1.12 CONFIG REQUIRED)
-  add_executable(reader-tests tests/main.cpp tests/reader_test.cpp tests/documentsession_test.cpp tests/drop_test.cpp tests/appconfig_test.cpp
+  add_executable(reader-tests tests/main.cpp tests/reader_test.cpp tests/documentsession_test.cpp tests/drop_test.cpp tests/application_test.cpp tests/appconfig_test.cpp
     src/appconfig.h src/appconfig.cpp src/documentsession.h src/documentsession.cpp src/clipboard.h src/clipboard.cpp)
   qt_add_resources(reader-tests "application-qml" PREFIX "/qt/qml/MdViewer"
     FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml)

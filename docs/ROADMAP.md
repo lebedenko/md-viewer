@@ -1,7 +1,8 @@
 # Roadmap
 
-Milestones are ordered by useful behavior, not dates. Only the scaffold is authorized/implemented now;
+Milestones are ordered by useful behavior, not dates. The foundation and single-file opening, copy, zoom, width and settings are implemented;
 new feature work gets a short SDD. Checkboxes mean implementation, with verification recorded in its SDD.
+Native open-dialog and file-manager drop checks in SDD 0003 remain pending.
 
 ## 0 — Foundation
 

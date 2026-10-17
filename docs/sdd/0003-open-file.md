@@ -57,7 +57,7 @@ path, from a parented modal file dialog, or by dropping a file onto the window, 
 - [x] Named-pipe, symlink-path and actual application QML drag/drop regressions (15-second CTest bounds).
 - [ ] Native manual checks.
 - [x] Update ARCHITECTURE.
-- [ ] Tick ROADMAP once native checks pass.
+- [x] Record implementation in ROADMAP; native verification remains pending here.
 
 ## Verification
 

@@ -17,14 +17,16 @@ and typography/theme options can share.
 
 ## Design and decisions
 
-- `AppConfig` (QML element, `src/appconfig.*`) reads once at construction and writes through on each change with
-  `QSaveFile`. Wrong-typed or unknown values fall back per key; unknown keys and invalid values are logged as warnings on the console
+- `AppConfig` (QML element, `src/appconfig.*`) reads once at construction and updates preferences immediately and debounces persistence with a restarting 250 ms single-shot timer
+  on the GUI thread and `QSaveFile` (maintenance update: [0009](0009-review-maintenance.md)).
+  Explicit `flush()`, application shutdown and destruction persist pending changes. Failed writes remain pending
+  and report an error without automatic retries. Existing unreadable or malformed files are never replaced. Wrong-typed or unknown values fall back per key; unknown keys and invalid values are logged as warnings on the console
   (`Configuration <path> - ...`).
 - Saving edits the existing parsed table, so unknown keys survive; comments are lost.
 - A syntax error yields defaults plus an `error` message; the file is never overwritten while invalid (changes apply
   for the run only).
 - tomlplusplus 3 from the system package via `find_package`; no lock or download. CI installs `libtomlplusplus-dev`.
-- Tests point `XDG_CONFIG_HOME` at a temporary directory.
+- Test startup isolates both `HOME` and `XDG_CONFIG_HOME`; application tests use a fresh config directory per harness.
 
 ## Acceptance criteria
 

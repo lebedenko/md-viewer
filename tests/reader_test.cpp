@@ -1,4 +1,5 @@
 #include "appconfig.h"
+#include "application_harness.h"
 #include "clipboard.h"
 #include "documentsession.h"
 
@@ -60,16 +61,9 @@ TEST(ReaderIntegration, RendersGfmExtensionsWithoutRawMarkers) {
 }
 
 TEST(ReaderIntegration, CopiesSelectionOfRealDocumentToClipboard) {
-  qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
-  qmlRegisterType<AppConfig>("MdViewer", 1, 0, "AppConfig");
-  qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",
-                                      [](QQmlEngine*, QJSEngine*) -> QObject* { return new Clipboard; });
-  QQmlEngine engine;
-  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
-  QQmlComponent component(&engine, QUrl::fromLocalFile(QString::fromUtf8(MD_VIEWER_MAIN_QML)));
-  ASSERT_TRUE(component.isReady()) << component.errorString().toStdString();
-  const std::unique_ptr<QObject> root(component.create());
-  ASSERT_NE(root, nullptr) << component.errorString().toStdString();
+  ApplicationHarness harness;
+  const auto& root = harness.root;
+  ASSERT_NE(root, nullptr) << harness.error.toStdString();
   auto* session = root->findChild<DocumentSession*>();
   ASSERT_NE(session, nullptr);
   session->openPath(QString::fromUtf8(MD_VIEWER_TEST_DATA) + QStringLiteral("/real-document.md"));

@@ -3,8 +3,10 @@
 A standalone Qt Quick application for reading and navigating local Markdown documentation.
 Built with C++23, Qt 6.8+, and the external QMarkdown 1.10 library. Linux is the initial supported platform.
 
-**Current state: scaffold.** The application displays a bundled welcome document and supports selection and
-copying. File opening, reload, history, outline, search, and folder browsing are planned, not implemented.
+**Current state: single-file reader.** Open local files from the command line, file dialog or drag and drop;
+select and copy rendered text or code, adjust keyboard zoom and column width, and edit preferences in Settings.
+Preferences persist in TOML after a 250 ms pause in changes and flush on shutdown.
+Live reload, history, outline, search and folder browsing remain planned.
 There is no HoloNight dependency, embedded editor, or Vim interaction layer.
 
 ## Start developing
