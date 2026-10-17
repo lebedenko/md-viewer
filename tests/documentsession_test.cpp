@@ -201,3 +201,90 @@ TEST_F(DocumentSessionTest, PreservesFilesystemSymlinkParentResolution) {
   waitUntilSettled(session);
   EXPECT_EQ(session.state(), DocumentSession::State::Ready);
 }
+
+namespace {
+
+void pump(int millis) {
+  QElapsedTimer timer;
+  timer.start();
+  while (timer.elapsed() < millis) {
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+  }
+}
+
+bool waitForRevision(const DocumentSession& session, int revision) {
+  QElapsedTimer timer;
+  timer.start();
+  while (session.revision() < revision && timer.elapsed() < 5000) {
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+  }
+  return session.revision() >= revision;
+}
+
+}  // namespace
+
+TEST_F(DocumentSessionTest, ReloadsAfterOrdinaryWrite) {
+  const QString path = write("live.md", "one");
+  DocumentSession session;
+  session.openPath(path);
+  waitUntilSettled(session);
+  EXPECT_FALSE(session.reloaded());
+  write("live.md", "two");
+  ASSERT_TRUE(waitForRevision(session, 2));
+  EXPECT_EQ(session.markdown(), QStringLiteral("two"));
+  EXPECT_TRUE(session.reloaded());
+}
+
+TEST_F(DocumentSessionTest, ReloadsAfterAtomicReplaceRepeatedly) {
+  const QString path = write("live.md", "one");
+  DocumentSession session;
+  session.openPath(path);
+  waitUntilSettled(session);
+  for (int i = 2; i <= 3; ++i) {
+    write("tmp.md", QByteArray("v") + QByteArray::number(i));
+    ASSERT_EQ(::rename(QFile::encodeName(filePath("tmp.md")).constData(), QFile::encodeName(path).constData()), 0);
+    ASSERT_TRUE(waitForRevision(session, i)) << i;
+    EXPECT_EQ(session.markdown(), QStringLiteral("v%1").arg(i));
+  }
+}
+
+TEST_F(DocumentSessionTest, IdenticalContentDoesNotBumpRevision) {
+  const QString path = write("live.md", "same");
+  DocumentSession session;
+  session.openPath(path);
+  waitUntilSettled(session);
+  write("live.md", "same");
+  pump(600);
+  EXPECT_EQ(session.revision(), 1);
+  EXPECT_EQ(session.state(), DocumentSession::State::Ready);
+}
+
+TEST_F(DocumentSessionTest, DeletedFileKeepsContentAndRecovers) {
+  const QString path = write("live.md", "first");
+  DocumentSession session;
+  session.openPath(path);
+  waitUntilSettled(session);
+  ASSERT_TRUE(QFile::remove(path));
+  pump(600);
+  EXPECT_EQ(session.state(), DocumentSession::State::Failed);
+  EXPECT_EQ(session.markdown(), QStringLiteral("first"));
+  write("live.md", "second");
+  ASSERT_TRUE(waitForRevision(session, 2));
+  EXPECT_EQ(session.state(), DocumentSession::State::Ready);
+  EXPECT_TRUE(session.error().isEmpty());
+  EXPECT_EQ(session.markdown(), QStringLiteral("second"));
+}
+
+TEST_F(DocumentSessionTest, OpeningAnotherFileStopsWatchingTheOldOne) {
+  const QString first = write("a.md", "a");
+  DocumentSession session;
+  session.openPath(first);
+  waitUntilSettled(session);
+  session.openPath(write("b.md", "b"));
+  waitUntilSettled(session);
+  write("a.md", "a changed");
+  pump(600);
+  EXPECT_EQ(session.markdown(), QStringLiteral("b"));
+  EXPECT_EQ(session.revision(), 2);
+  EXPECT_FALSE(session.reloaded());
+}

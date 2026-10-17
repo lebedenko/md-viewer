@@ -1,7 +1,9 @@
 #pragma once
 
+#include <QFileSystemWatcher>
 #include <QObject>
 #include <QString>
+#include <QTimer>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 
@@ -18,12 +20,14 @@ class DocumentSession : public QObject {
   Q_PROPERTY(QString markdown READ markdown NOTIFY documentChanged)
   Q_PROPERTY(QString warning READ warning NOTIFY documentChanged)
   Q_PROPERTY(int revision READ revision NOTIFY documentChanged)
+  Q_PROPERTY(bool reloaded READ reloaded NOTIFY documentChanged)
 
  public:
   enum class State : quint8 { Empty, Loading, Ready, Failed };
   Q_ENUM(State)
 
   static constexpr qint64 kMaxBytes = 16 * 1024 * 1024;
+  static constexpr int kReloadDebounceMs = 150;
 
   struct Decoded {
     QString text;
@@ -50,13 +54,15 @@ class DocumentSession : public QObject {
   [[nodiscard]] QString markdown() const { return markdown_; }
   [[nodiscard]] QString warning() const { return warning_; }
   [[nodiscard]] int revision() const { return revision_; }
+  [[nodiscard]] bool reloaded() const { return reloaded_; }
 
  signals:
   void stateChanged();
   void documentChanged();
 
  private:
-  void load(const QString& path);
+  void load(const QString& path, bool reload = false);
+  void watch(const QString& path);
   void fail(const QString& message);
 
   State state_ = State::Empty;
@@ -66,5 +72,8 @@ class DocumentSession : public QObject {
   QString markdown_;
   QString warning_;
   int revision_ = 0;
+  bool reloaded_ = false;
+  QFileSystemWatcher watcher_;
+  QTimer reload_timer_;
   quint64 generation_ = 0;
 };

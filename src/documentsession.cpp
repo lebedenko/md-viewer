@@ -41,7 +41,18 @@ std::expected<DocumentSession::Decoded, QString> readFile(const QString& path) {
 
 }  // namespace
 
-DocumentSession::DocumentSession(QObject* parent) : QObject(parent) {}
+DocumentSession::DocumentSession(QObject* parent) : QObject(parent) {
+  reload_timer_.setSingleShot(true);
+  reload_timer_.setInterval(kReloadDebounceMs);
+  connect(&watcher_, &QFileSystemWatcher::fileChanged, &reload_timer_, qOverload<>(&QTimer::start));
+  connect(&watcher_, &QFileSystemWatcher::directoryChanged, &reload_timer_, qOverload<>(&QTimer::start));
+  connect(&reload_timer_, &QTimer::timeout, this, [this] {
+    const QString path = url_.toLocalFile();
+    if (!path.isEmpty()) {
+      load(path, true);
+    }
+  });
+}
 
 std::expected<QString, QString> DocumentSession::resolvePath(const QString& input) {
   QString path = input;
@@ -107,25 +118,37 @@ void DocumentSession::openPath(const QString& path) {
   load(*resolved);
 }
 
-void DocumentSession::load(const QString& path) {
+void DocumentSession::load(const QString& path, bool reload) {
   const quint64 generation = ++generation_;
   state_ = State::Loading;
   error_.clear();
   emit stateChanged();
   auto* watcher = new QFutureWatcher<std::expected<Decoded, QString>>(this);
-  connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher, generation, path] {
+  connect(watcher, &QFutureWatcherBase::finished, this, [this, watcher, generation, path, reload] {
     const auto result = watcher->result();
     watcher->deleteLater();
     if (generation != generation_) {
       return;  // A newer request superseded this one.
     }
+    if (reload) {
+      watch(path);  // An atomic replace drops the file watch; the directory watch survives.
+    }
     if (!result) {
       fail(result.error());
       return;
     }
+    const QString warning = result->lossy ? tr("Invalid UTF-8 bytes were replaced") : QString();
+    if (reload && result->text == markdown_ && warning == warning_) {
+      state_ = State::Ready;
+      error_.clear();
+      emit stateChanged();
+      return;
+    }
     markdown_ = result->text;
-    warning_ = result->lossy ? tr("Invalid UTF-8 bytes were replaced") : QString();
+    warning_ = warning;
+    reloaded_ = reload;
     url_ = QUrl::fromLocalFile(path);
+    watch(path);
     title_ = QFileInfo(path).fileName();
     ++revision_;
     state_ = State::Ready;
@@ -134,6 +157,22 @@ void DocumentSession::load(const QString& path) {
     emit stateChanged();
   });
   watcher->setFuture(QtConcurrent::run([path] { return readFile(path); }));
+}
+
+void DocumentSession::watch(const QString& path) {
+  const QString dir = QFileInfo(path).absolutePath();
+  if (!watcher_.files().contains(path) && QFileInfo::exists(path)) {
+    watcher_.addPath(path);
+  }
+  if (!watcher_.directories().contains(dir)) {
+    watcher_.addPath(dir);
+  }
+  const QStringList stale = watcher_.files() + watcher_.directories();
+  for (const QString& entry : stale) {
+    if (entry != path && entry != dir) {
+      watcher_.removePath(entry);
+    }
+  }
 }
 
 void DocumentSession::fail(const QString& message) {

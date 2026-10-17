@@ -35,7 +35,34 @@ Rectangle {
     }
 
     function resetScroll() {
+        restoring = false
         viewport.contentY = 0
+    }
+
+    // Reading position survives a reload as a fraction of the scrollable height.
+    property real savedFraction: 0
+    property bool restoring: false
+
+    function savePosition() {
+        const range = viewport.contentHeight - viewport.height
+        savedFraction = range > 0 ? Math.max(0, Math.min(1, viewport.contentY / range)) : 0
+    }
+
+    function restorePosition() {
+        restoring = true
+        applyPosition()
+        restoreTimer.restart()
+    }
+
+    function applyPosition() {
+        const range = viewport.contentHeight - viewport.height
+        viewport.contentY = range > 0 ? savedFraction * range : 0
+    }
+
+    Timer {
+        id: restoreTimer
+        interval: 400
+        onTriggered: root.restoring = false
     }
 
     color: paperColor
@@ -47,6 +74,7 @@ Rectangle {
         contentHeight: document.height + 48
         clip: true
         Controls.ScrollBar.vertical: Controls.ScrollBar {}
+        onContentHeightChanged: if (root.restoring) root.applyPosition()
 
         MarkdownView {
             id: document

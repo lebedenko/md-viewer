@@ -186,8 +186,15 @@ Controls.ApplicationWindow {
 
     Connections {
         target: session
+        function onStateChanged() {
+            if (session.state === DocumentSession.Loading)
+                reader.savePosition()
+        }
         function onDocumentChanged() {
-            reader.resetScroll()
+            if (session.reloaded)
+                reader.restorePosition()
+            else
+                reader.resetScroll()
         }
     }
 
