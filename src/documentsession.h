@@ -5,7 +5,6 @@
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 
-#include <cstdint>
 #include <expected>
 
 class DocumentSession : public QObject {
@@ -21,7 +20,7 @@ class DocumentSession : public QObject {
   Q_PROPERTY(int revision READ revision NOTIFY documentChanged)
 
  public:
-  enum class State : std::uint8_t { Empty, Loading, Ready, Failed };
+  enum class State : quint8 { Empty, Loading, Ready, Failed };
   Q_ENUM(State)
 
   static constexpr qint64 kMaxBytes = 16 * 1024 * 1024;
