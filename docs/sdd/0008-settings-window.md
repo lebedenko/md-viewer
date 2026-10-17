@@ -15,7 +15,7 @@ modal settings dialog bound to `AppConfig`, and it surfaces the configuration fi
 - Controls: zoom slider (50–300 %, 5 % steps) and column-width combo box. Both update `AppConfig` immediately
   and the reader updates live; persistence follows a 250 ms debounce (and shutdown flush); there is no Apply/Cancel step.
 - Shows the config file path and, when present, the TOML syntax error (changes then apply for the run only).
-- Non-goals: typography and light/dark options (next roadmap item), editor setting, a separate OS window.
+- Non-goals: typography and light/dark options (added in SDD 0011), editor setting, a separate OS window.
 
 ## Design and decisions
 

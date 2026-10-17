@@ -16,6 +16,11 @@ class AppConfig : public QObject {
   QML_ELEMENT
   Q_PROPERTY(double zoom READ zoom WRITE setZoom NOTIFY zoomChanged)
   Q_PROPERTY(int widthPreset READ widthPreset WRITE setWidthPreset NOTIFY widthPresetChanged)
+  Q_PROPERTY(int theme READ theme WRITE setTheme NOTIFY themeChanged)
+  Q_PROPERTY(QString bodyFont READ bodyFont WRITE setBodyFont NOTIFY bodyFontChanged)
+  Q_PROPERTY(QString codeFont READ codeFont WRITE setCodeFont NOTIFY codeFontChanged)
+  Q_PROPERTY(double blockSpacing READ blockSpacing WRITE setBlockSpacing NOTIFY blockSpacingChanged)
+  Q_PROPERTY(bool linkUnderline READ linkUnderline WRITE setLinkUnderline NOTIFY linkUnderlineChanged)
   Q_PROPERTY(QString path READ path CONSTANT)
   Q_PROPERTY(QString error READ error NOTIFY errorChanged)
 
@@ -25,13 +30,25 @@ class AppConfig : public QObject {
   enum WidthPreset : int { Narrow = 0, Comfortable = 1, Wide = 2 };
   Q_ENUM(WidthPreset)
 
+  // NOLINTNEXTLINE(cppcoreguidelines-use-enum-class, performance-enum-size)
+  enum Theme : int { System = 0, Light = 1, Dark = 2 };
+  Q_ENUM(Theme)
+
   static constexpr double kMinZoom = 0.5;
   static constexpr double kMaxZoom = 3.0;
   static constexpr int kWidthPresetCount = 3;  // narrow, comfortable, wide
+  static constexpr int kThemeCount = 3;        // system, light, dark
+  static constexpr double kMinBlockSpacing = 0.5;
+  static constexpr double kMaxBlockSpacing = 2.0;
 
   struct Values {
     double zoom = 1.0;
     int width_preset = Comfortable;
+    int theme = System;
+    QString body_font;  // empty: the style preset's family
+    QString code_font;
+    double block_spacing = 1.0;  // multiplier of the preset's block spacing
+    bool link_underline = true;
     QStringList warnings;  // unknown keys and invalid values; the file is still usable
   };
 
@@ -48,14 +65,29 @@ class AppConfig : public QObject {
 
   [[nodiscard]] double zoom() const { return values_.zoom; }
   [[nodiscard]] int widthPreset() const { return values_.width_preset; }
+  [[nodiscard]] int theme() const { return values_.theme; }
+  [[nodiscard]] QString bodyFont() const { return values_.body_font; }
+  [[nodiscard]] QString codeFont() const { return values_.code_font; }
+  [[nodiscard]] double blockSpacing() const { return values_.block_spacing; }
+  [[nodiscard]] bool linkUnderline() const { return values_.link_underline; }
   [[nodiscard]] QString path() const { return path_; }
   [[nodiscard]] QString error() const { return error_; }
   void setZoom(double zoom);
   void setWidthPreset(int preset);
+  void setTheme(int theme);
+  void setBodyFont(const QString& family);
+  void setCodeFont(const QString& family);
+  void setBlockSpacing(double spacing);
+  void setLinkUnderline(bool underline);
 
  signals:
   void zoomChanged();
   void widthPresetChanged();
+  void themeChanged();
+  void bodyFontChanged();
+  void codeFontChanged();
+  void blockSpacingChanged();
+  void linkUnderlineChanged();
   void errorChanged();
 
  private:

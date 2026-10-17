@@ -44,6 +44,12 @@ Controls.ApplicationWindow {
         { "value": AppConfig.Wide, "name": qsTr("Wide"), "width": 1000 }
     ]
 
+    readonly property var themes: [
+        { "value": AppConfig.System, "name": qsTr("System") },
+        { "value": AppConfig.Light, "name": qsTr("Light") },
+        { "value": AppConfig.Dark, "name": qsTr("Dark") }
+    ]
+
     readonly property int widthPresetIndex: Math.max(0, widthPresets.findIndex(preset => preset.value === config.widthPreset))
 
     function cycleWidth() {
@@ -89,6 +95,7 @@ Controls.ApplicationWindow {
         objectName: "settingsDialog"
         appConfig: config
         widthPresets: window.widthPresets
+        themes: window.themes
     }
 
     FileDialog {
@@ -162,12 +169,16 @@ Controls.ApplicationWindow {
         id: reader
         objectName: "readerPane"
         anchors.fill: parent
-        dark: window.palette.base.hslLightness < 0.5
-        paperColor: window.palette.base
-        textColor: window.palette.text
-        linkColor: window.palette.link
-        selectionColor: window.palette.highlight
+        dark: config.theme === AppConfig.System ? window.palette.base.hslLightness < 0.5 : config.theme === AppConfig.Dark
+        paperColor: config.theme === AppConfig.System ? window.palette.base : dark ? "#1e1f22" : "#ffffff"
+        textColor: config.theme === AppConfig.System ? window.palette.text : dark ? "#e3e5e8" : "#1f2328"
+        linkColor: config.theme === AppConfig.System ? window.palette.link : dark ? "#6cb0ff" : "#0969da"
+        selectionColor: config.theme === AppConfig.System ? window.palette.highlight : dark ? "#803b82f6" : "#80338bff"
         zoom: config.zoom
+        bodyFamily: config.bodyFont
+        codeFamily: config.codeFont
+        blockSpacingScale: config.blockSpacing
+        linkUnderline: config.linkUnderline
         maxColumnWidth: window.widthPresets[window.widthPresetIndex].width
         markdown: session.revision === 0 ? window.sampleMarkdown : session.markdown
         onCopyRequested: function(text) { Clipboard.copyText(text) }

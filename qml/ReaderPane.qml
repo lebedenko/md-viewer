@@ -13,6 +13,10 @@ Rectangle {
     readonly property color separatorColor: Qt.alpha(textColor, 0.2)
     readonly property color codeBackgroundColor: Qt.alpha(textColor, 0.07)
     property real zoom: 1.0
+    property string bodyFamily: ""
+    property string codeFamily: ""
+    property real blockSpacingScale: 1.0
+    property bool linkUnderline: true
     property real maxColumnWidth: 800
     signal copyRequested(string text)
 
@@ -22,9 +26,9 @@ Rectangle {
         preset: root.dark ? MarkdownStyle.PolishedDark : MarkdownStyle.PolishedLight
     }
 
-    function scaledFont(base) {
+    function scaledFont(base, family) {
         const scaled = Qt.font({
-            "family": base.family, "weight": base.weight, "italic": base.italic,
+            "family": family || base.family, "weight": base.weight, "italic": base.italic,
             "pointSize": base.pointSize * root.zoom
         })
         return scaled
@@ -62,16 +66,18 @@ Rectangle {
                 h5Color: root.textColor
                 h6Color: root.textColor
                 codeBlockColor: root.textColor
-                bodyFont: root.scaledFont(baseline.bodyFont)
-                codeBlockFont: root.scaledFont(baseline.codeBlockFont)
-                inlineCodeFont: root.scaledFont(baseline.inlineCodeFont)
-                h1Font: root.scaledFont(baseline.h1Font)
-                h2Font: root.scaledFont(baseline.h2Font)
-                h3Font: root.scaledFont(baseline.h3Font)
-                h4Font: root.scaledFont(baseline.h4Font)
-                h5Font: root.scaledFont(baseline.h5Font)
-                h6Font: root.scaledFont(baseline.h6Font)
+                bodyFont: root.scaledFont(baseline.bodyFont, root.bodyFamily)
+                codeBlockFont: root.scaledFont(baseline.codeBlockFont, root.codeFamily)
+                inlineCodeFont: root.scaledFont(baseline.inlineCodeFont, root.codeFamily)
+                h1Font: root.scaledFont(baseline.h1Font, root.bodyFamily)
+                h2Font: root.scaledFont(baseline.h2Font, root.bodyFamily)
+                h3Font: root.scaledFont(baseline.h3Font, root.bodyFamily)
+                h4Font: root.scaledFont(baseline.h4Font, root.bodyFamily)
+                h5Font: root.scaledFont(baseline.h5Font, root.bodyFamily)
+                h6Font: root.scaledFont(baseline.h6Font, root.bodyFamily)
                 linkColor: root.linkColor
+                linkUnderline: root.linkUnderline
+                blockSpacing: baseline.blockSpacing * root.blockSpacingScale
                 selectionBackgroundColor: root.selectionColor
                 headings.h1.separatorColor: root.separatorColor
                 headings.h2.separatorColor: root.separatorColor

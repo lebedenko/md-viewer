@@ -26,7 +26,7 @@ Complete; local, hosted-main and owner-confirmed native evidence is recorded in
 - [x] Column width presets ([0006](sdd/0006-column-width.md)).
 - [x] TOML application configuration, XDG location ([0007](sdd/0007-toml-config.md)).
 - [x] Toolbar settings button and modal settings window ([0008](sdd/0008-settings-window.md)).
-- [ ] Small typography preferences; light/dark override.
+- [x] Small typography preferences; reader light/dark override ([0011](sdd/0011-typography-theme.md)).
 - [ ] Live reload through ordinary and atomic saves, with proportional position preservation.
 - [ ] Configured external editor action; safe argument handling and failure feedback.
 - [ ] Conventional keyboard shortcuts and visible focus.

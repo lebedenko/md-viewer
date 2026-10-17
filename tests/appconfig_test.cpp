@@ -58,6 +58,48 @@ TEST(AppConfig, WarnsAboutUnknownKeysAndInvalidValues) {
   EXPECT_TRUE(AppConfig::parse("[reader]\nzoom = 1.0\ncolumn_width = \"wide\"\n")->warnings.isEmpty());
 }
 
+TEST(AppConfig, ParsesTypographyAndThemeWithPerKeyFallback) {
+  const auto valid = AppConfig::parse(
+      "[reader]\ntheme = \"dark\"\nbody_font = \" Serif \"\ncode_font = \"Mono\"\n"
+      "block_spacing = 9.0\nlink_underline = false\n");
+  ASSERT_TRUE(valid.has_value());
+  EXPECT_TRUE(valid->warnings.isEmpty());
+  EXPECT_EQ(valid->theme, AppConfig::Dark);
+  EXPECT_EQ(valid->body_font, "Serif");
+  EXPECT_EQ(valid->code_font, "Mono");
+  EXPECT_DOUBLE_EQ(valid->block_spacing, AppConfig::kMaxBlockSpacing);
+  EXPECT_FALSE(valid->link_underline);
+
+  const auto bad =
+      AppConfig::parse("[reader]\ntheme = \"sepia\"\nbody_font = 3\nblock_spacing = \"x\"\nlink_underline = \"yes\"\n");
+  ASSERT_TRUE(bad.has_value());
+  EXPECT_EQ(bad->warnings.size(), 4);
+  EXPECT_EQ(bad->theme, AppConfig::System);
+  EXPECT_TRUE(bad->body_font.isEmpty());
+  EXPECT_DOUBLE_EQ(bad->block_spacing, 1.0);
+  EXPECT_TRUE(bad->link_underline);
+}
+
+TEST(AppConfig, TypographyAndThemeRoundTrip) {
+  QTemporaryDir dir;
+  const QString path = dir.filePath("config.toml");
+  {
+    AppConfig config({path});
+    config.setTheme(AppConfig::Light);
+    config.setBodyFont(QStringLiteral("Serif"));
+    config.setCodeFont(QStringLiteral("Mono"));
+    config.setBlockSpacing(1.5);
+    config.setLinkUnderline(false);
+    ASSERT_TRUE(config.flush());
+  }
+  const AppConfig reloaded({path});
+  EXPECT_EQ(reloaded.theme(), AppConfig::Light);
+  EXPECT_EQ(reloaded.bodyFont(), "Serif");
+  EXPECT_EQ(reloaded.codeFont(), "Mono");
+  EXPECT_DOUBLE_EQ(reloaded.blockSpacing(), 1.5);
+  EXPECT_FALSE(reloaded.linkUnderline());
+}
+
 TEST(AppConfig, UsesDefaultsWithoutFileAndCreatesPrimaryOnChange) {
   QTemporaryDir dir;
   const QString primary = dir.filePath("xdg/md-viewer/config.toml");

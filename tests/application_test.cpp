@@ -95,6 +95,25 @@ TEST(ApplicationSettings, ShortcutOpensModalDialogThatEditsConfigAndEscapeCloses
   ASSERT_TRUE(QMetaObject::invokeMethod(zoom_slider, "moved"));
   EXPECT_DOUBLE_EQ(reader->property("zoom").toDouble(), 1.5);
 
+  auto* theme_box = dialog->findChild<QObject*>(QStringLiteral("themeBox"));
+  ASSERT_NE(theme_box, nullptr);
+  ASSERT_TRUE(QMetaObject::invokeMethod(theme_box, "activated", Q_ARG(int, 2)));
+  EXPECT_TRUE(reader->property("dark").toBool());
+  ASSERT_TRUE(QMetaObject::invokeMethod(theme_box, "activated", Q_ARG(int, 1)));
+  EXPECT_FALSE(reader->property("dark").toBool());
+
+  auto* spacing_slider = dialog->findChild<QObject*>(QStringLiteral("spacingSlider"));
+  ASSERT_NE(spacing_slider, nullptr);
+  ASSERT_TRUE(spacing_slider->setProperty("value", 1.5));
+  ASSERT_TRUE(QMetaObject::invokeMethod(spacing_slider, "moved"));
+  EXPECT_DOUBLE_EQ(reader->property("blockSpacingScale").toDouble(), 1.5);
+
+  auto* underline_switch = dialog->findChild<QObject*>(QStringLiteral("underlineSwitch"));
+  ASSERT_NE(underline_switch, nullptr);
+  ASSERT_TRUE(underline_switch->setProperty("checked", false));
+  ASSERT_TRUE(QMetaObject::invokeMethod(underline_switch, "toggled"));
+  EXPECT_FALSE(reader->property("linkUnderline").toBool());
+
   QTest::keyClick(window, Qt::Key_Escape);
   QCoreApplication::processEvents(QEventLoop::AllEvents, 300);
   EXPECT_FALSE(dialog->property("visible").toBool());

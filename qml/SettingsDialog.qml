@@ -7,6 +7,7 @@ Controls.Dialog {
     id: root
     required property AppConfig appConfig
     property var widthPresets: []
+    property var themes: []
 
     title: qsTr("Settings")
     modal: true
@@ -64,6 +65,76 @@ Controls.Dialog {
                 model: root.widthPresets.map(preset => preset.name)
                 currentIndex: root.widthPresets.findIndex(preset => preset.value === root.appConfig.widthPreset)
                 onActivated: index => root.appConfig.widthPreset = root.widthPresets[index].value
+            }
+
+            Controls.Label {
+                text: qsTr("Theme")
+            }
+            Controls.ComboBox {
+                id: themeBox
+                objectName: "themeBox"
+                Layout.fillWidth: true
+                Layout.columnSpan: 2
+                model: root.themes.map(theme => theme.name)
+                currentIndex: root.themes.findIndex(theme => theme.value === root.appConfig.theme)
+                onActivated: index => root.appConfig.theme = root.themes[index].value
+            }
+
+            Controls.Label {
+                text: qsTr("Body font")
+            }
+            Controls.ComboBox {
+                id: bodyFontBox
+                objectName: "bodyFontBox"
+                Layout.fillWidth: true
+                Layout.columnSpan: 2
+                model: [qsTr("Default")].concat(Qt.fontFamilies())
+                currentIndex: Math.max(0, model.indexOf(root.appConfig.bodyFont))
+                onActivated: index => root.appConfig.bodyFont = index === 0 ? "" : model[index]
+            }
+
+            Controls.Label {
+                text: qsTr("Code font")
+            }
+            Controls.ComboBox {
+                id: codeFontBox
+                objectName: "codeFontBox"
+                Layout.fillWidth: true
+                Layout.columnSpan: 2
+                model: [qsTr("Default")].concat(Qt.fontFamilies())
+                currentIndex: Math.max(0, model.indexOf(root.appConfig.codeFont))
+                onActivated: index => root.appConfig.codeFont = index === 0 ? "" : model[index]
+            }
+
+            Controls.Label {
+                text: qsTr("Block spacing")
+            }
+            Controls.Slider {
+                id: spacingSlider
+                objectName: "spacingSlider"
+                Layout.fillWidth: true
+                from: 0.5
+                to: 2.0
+                stepSize: 0.1
+                snapMode: Controls.Slider.SnapAlways
+                value: root.appConfig.blockSpacing
+                onMoved: root.appConfig.blockSpacing = value
+            }
+            Controls.Label {
+                Layout.minimumWidth: 48
+                horizontalAlignment: Text.AlignRight
+                text: Math.round(root.appConfig.blockSpacing * 100) + "%"
+            }
+
+            Controls.Label {
+                text: qsTr("Underline links")
+            }
+            Controls.Switch {
+                id: underlineSwitch
+                objectName: "underlineSwitch"
+                Layout.columnSpan: 2
+                checked: root.appConfig.linkUnderline
+                onToggled: root.appConfig.linkUnderline = checked
             }
         }
 

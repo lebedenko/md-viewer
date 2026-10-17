@@ -18,7 +18,7 @@ The `mdv` executable owns its MdViewer QML module. Main composes the window and 
 ReaderPane. ReaderPane owns its viewport, rendering style, selection enablement and code-copy controls.
 Main also provides a header/footer frame; ReaderPane selects qmarkdown's Polished preset from the system theme,
 keeps palette-bound color overrides and enables all GFM extensions.
-`AppConfig` reads and atomically writes the TOML preferences (zoom, column width); `SettingsDialog` edits them (SDD 0008). Clipboard owns the operating-system clipboard write. With no file argument the initial document is bundled text. `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003.
+`AppConfig` reads and atomically writes the TOML preferences (zoom, column width, theme, fonts, spacing, link underline); `SettingsDialog` edits them (SDD 0008). Clipboard owns the operating-system clipboard write. With no file argument the initial document is bundled text. `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003.
 Images remain denied by qmarkdown's default resource policy. Link navigation is not implemented in the scaffold.
 Standard runtime Controls allow user-selected installed styles without a direct dependency on any specific style.
 
