@@ -252,12 +252,25 @@ Rectangle {
                 headings.h1.separatorColor: root.separatorColor
                 headings.h2.separatorColor: root.separatorColor
                 codeBlock.backgroundColor: root.codeBackgroundColor
+                codeBlock.verticalPadding: 6
                 codeBlock.borderColor: root.separatorColor
                 inlineCode.backgroundColor: root.codeBackgroundColor
                 table.borderColor: root.separatorColor
             }
             onCopyRequested: function(text) { root.copyRequested(text) }
             onCodeBlockCopyRequested: function(text) { root.copyRequested(text) }
+            taskIndicator: Component {
+                TaskIndicator {
+                    hostPalette.window: root.paperColor
+                    hostPalette.base: root.paperColor
+                    hostPalette.button: root.paperColor
+                    hostPalette.windowText: root.textColor
+                    hostPalette.text: root.textColor
+                    hostPalette.buttonText: root.textColor
+                    hostPalette.highlight: root.linkColor
+                    hostPalette.highlightedText: root.paperColor
+                }
+            }
             codeBlockActions: Component { CodeHeader {} }
         }
     }

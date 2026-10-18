@@ -74,7 +74,7 @@ CodeHeader and CodeScrollBar are application-owned adapters tested independently
 
 Native Wayland visual review: launched the system-provider build with a temporary document and isolated settings
 (selection disabled). The captured native window shows rendered math, highlighted C++, language/Copy header,
-line numbers and native task indicators. Interactive nested scrolling, code-copy input, light/dark and Settings
+line numbers and QMarkdown fallback task artwork (not native Controls indicators). Interactive nested scrolling, code-copy input, light/dark and Settings
 scrolling remain pending. A compositor focus command failed, so no native keyboard-input success is claimed.
 Native screenshot and temporary fixtures remain under `/tmp/mdv14-native*`; they are not repository artifacts.
 Hosted CI, including the Qt 6.8.3 KDE preparation path, has not been run.

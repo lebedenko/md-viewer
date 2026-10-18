@@ -3,6 +3,7 @@
 #include "clipboard.h"
 #include "documentsession.h"
 
+#include <QAccessible>
 #include <QClipboard>
 #include <QCoreApplication>
 #include <QDir>
@@ -13,7 +14,9 @@
 #include <QGuiApplication>
 #include <QImage>
 #include <QQmlComponent>
+#include <QQmlContext>
 #include <QQmlEngine>
+#include <QQmlExpression>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QTest>
@@ -222,10 +225,39 @@ TEST(ReaderFeatures, ApplicationOwnedCodeComponentsHonorCallbacks) {
        {"codeText", "int answer = 42;\n"},
        {"requestCopy", QVariant::fromValue(engine.evaluate("(function() { ++copies; })"))}}));
   ASSERT_NE(item, nullptr) << header.errorString().toStdString();
-  auto* button = item->findChild<QObject*>(QStringLiteral("codeCopyButton"));
+  auto* button = item->findChild<QQuickItem*>(QStringLiteral("codeCopyButton"));
   ASSERT_NE(button, nullptr);
   ASSERT_TRUE(QMetaObject::invokeMethod(button, "clicked"));
   EXPECT_EQ(engine.evaluate("copies").toInt(), 1);
+  auto* label = item->findChild<QQuickItem*>(QStringLiteral("codeLanguageLabel"));
+  ASSERT_NE(label, nullptr);
+  QQuickWindow window;
+  window.resize(400, 100);
+  auto* headerItem = qobject_cast<QQuickItem*>(item.get());
+  headerItem->setParentItem(window.contentItem());
+  headerItem->setWidth(400);
+  headerItem->setHeight(headerItem->implicitHeight());
+  window.show();
+  QTest::qWait(20);
+  EXPECT_EQ(label->x(), 0);
+  EXPECT_NEAR(button->x() + button->width(), headerItem->width(), 0.01);
+  EXPECT_NEAR(button->x() - label->width(), 8, 0.01);
+  headerItem->setWidth(200);
+  EXPECT_NEAR(button->x() + button->width(), 200, 0.01);
+  EXPECT_TRUE(QFile::exists(QStringLiteral(":/assets/copy.svg")));
+  QQmlExpression iconSource(qmlContext(button), button, QStringLiteral("icon.source.toString()"));
+  EXPECT_EQ(iconSource.evaluate().toString(), "qrc:/assets/copy.svg");
+  EXPECT_EQ(button->property("padding").toInt(), 4);
+  auto* accessible = QAccessible::queryAccessibleInterface(button);
+  ASSERT_NE(accessible, nullptr);
+  EXPECT_EQ(accessible->text(QAccessible::Name), QStringLiteral("Copy code"));
+  button->forceActiveFocus(Qt::TabFocusReason);
+  EXPECT_TRUE(button->hasActiveFocus());
+  QTest::keyClick(&window, Qt::Key_Space);
+  EXPECT_EQ(engine.evaluate("copies").toInt(), 2);
+  item->setProperty("languageName", "");
+  EXPECT_FALSE(label->isVisible());
+  EXPECT_NEAR(button->x() + button->width(), headerItem->width(), 0.01);
   QQmlComponent bar(&engine, QUrl::fromLocalFile(directory + "/CodeScrollBar.qml"));
   std::unique_ptr<QObject> scrollbar(bar.createWithInitialProperties(
       {{"orientation", Qt::Vertical},
@@ -237,4 +269,60 @@ TEST(ReaderFeatures, ApplicationOwnedCodeComponentsHonorCallbacks) {
   scrollbar->setProperty("pressed", true);
   scrollbar->setProperty("position", 0.5);
   EXPECT_DOUBLE_EQ(engine.evaluate("lastPosition").toNumber(), 0.5);
+}
+
+TEST(ReaderFeatures, DecorativeTaskArtworkTracksStateWithoutInputSemantics) {
+  QQmlEngine engine;
+  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
+  QQmlComponent styleComponent(&engine);
+  styleComponent.setData("import QMarkdown 1.13; MarkdownStyle {}", QUrl());
+  std::unique_ptr<QObject> style(styleComponent.create());
+  ASSERT_NE(style, nullptr) << styleComponent.errorString().toStdString();
+  const QString directory = QFileInfo(QString::fromUtf8(MD_VIEWER_READER_QML)).absolutePath();
+  QQmlComponent component(&engine, QUrl::fromLocalFile(directory + "/TaskIndicator.qml"));
+  std::unique_ptr<QObject> adapter(
+      component.createWithInitialProperties({{"checked", false}, {"markdownStyle", QVariant::fromValue(style.get())}}));
+  ASSERT_NE(adapter, nullptr) << component.errorString().toStdString();
+  auto* item = qobject_cast<QQuickItem*>(adapter.get());
+  ASSERT_NE(item, nullptr);
+  EXPECT_GT(item->implicitWidth(), 0);
+  EXPECT_GT(item->implicitHeight(), 0);
+  EXPECT_FALSE(item->activeFocusOnTab());
+  QQmlExpression ignored(qmlContext(item), item, QStringLiteral("Accessible.ignored"));
+  EXPECT_TRUE(ignored.evaluate().toBool());
+  auto* control = adapter->findChild<QQuickItem*>(QStringLiteral("taskArtworkControl"));
+  ASSERT_NE(control, nullptr);
+  EXPECT_FALSE(control->isVisible());
+  EXPECT_TRUE(control->isEnabled());
+  EXPECT_EQ(control->property("focusPolicy").toInt(), Qt::NoFocus);
+  QQmlExpression controlIgnored(qmlContext(control), control, QStringLiteral("Accessible.ignored"));
+  EXPECT_TRUE(controlIgnored.evaluate().toBool());
+  EXPECT_FALSE(control->property("checked").toBool());
+  adapter->setProperty("checked", true);
+  EXPECT_TRUE(control->property("checked").toBool());
+  QQuickWindow window;
+  item->setParentItem(window.contentItem());
+  item->setSize(QSizeF(item->implicitWidth(), item->implicitHeight()));
+  window.show();
+  QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier, QPoint(2, 2));
+  QTest::keyClick(&window, Qt::Key_Space);
+  EXPECT_TRUE(adapter->property("checked").toBool());
+  EXPECT_TRUE(control->property("checked").toBool());
+  EXPECT_FALSE(control->hasActiveFocus());
+  const auto font = QFont(QStringLiteral("monospace"), 22);
+  style->setProperty("bodyFont", font);
+  EXPECT_EQ(control->property("font").value<QFont>().pointSize(), 22);
+}
+
+TEST(ReaderFeatures, PublicPresentationAdaptersAndCodePadding) {
+  ApplicationHarness harness;
+  ASSERT_NE(harness.root, nullptr) << harness.error.toStdString();
+  auto* document = harness.root->findChild<QQuickItem*>(QStringLiteral("markdownDocument"));
+  ASSERT_NE(document, nullptr);
+  EXPECT_NE(document->property("taskIndicator").value<QQmlComponent*>(), nullptr);
+  auto* style = document->property("style").value<QObject*>();
+  ASSERT_NE(style, nullptr);
+  auto* codeBlock = style->property("codeBlock").value<QObject*>();
+  ASSERT_NE(codeBlock, nullptr);
+  EXPECT_DOUBLE_EQ(codeBlock->property("verticalPadding").toDouble(), 6);
 }
