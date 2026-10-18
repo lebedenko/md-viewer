@@ -1,7 +1,7 @@
 # Markdown Viewer
 
 A standalone Qt Quick application for reading and navigating local Markdown documentation.
-Built with C++23, Qt 6.8+, and the external QMarkdown 1.10 library. Linux is the initial supported platform.
+Built with C++23, Qt 6.8+, and the external QMarkdown 1.13 library. Linux is the initial supported platform.
 
 **Current state: single-file reader.** Open local files from the command line, file dialog or drag and drop;
 select and copy rendered text or code, adjust keyboard zoom and column width, and edit preferences in Settings.
@@ -43,7 +43,7 @@ Select a non-system Qt SDK using the `CMAKE_PREFIX_PATH` environment variable be
 Use compatible Qt/toolchains for qmarkdown and the application. Build directories are specific to a toolchain;
 use fresh directories when switching Qt or compiler versions.
 
-An installed shared QMarkdown 1.10 or compatible later 1.x package can replace `task deps`:
+An installed shared QMarkdown 1.13 or compatible later 1.x package can replace `task deps`:
 
 ```sh
 cmake --preset debug -DCMAKE_PREFIX_PATH=/path/to/provider/prefix

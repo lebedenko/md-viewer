@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls as Controls
-import QMarkdown 1.10
+import QMarkdown 1.13
 
 Rectangle {
     id: root

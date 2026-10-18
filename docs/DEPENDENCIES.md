@@ -9,7 +9,7 @@ Dependency ownership does not change this rule: qmarkdown is a third-party packa
 | Dependency | Scope | Consumption | Version policy |
 | --- | --- | --- | --- |
 | Qt | Production | find_package(Qt6 ...); Qt6::* | Minimum 6.8; initial CI SDK 6.8.3 |
-| qmarkdown | Production | find_package(QMarkdown 1.10 CONFIG REQUIRED); QMarkdown::QMarkdown | Compatible 1.x; reproducible preparation pins 1.10.0 commit + SHA-256 |
+| qmarkdown | Production | find_package(QMarkdown 1.13 CONFIG REQUIRED); QMarkdown::QMarkdown | Compatible 1.x; reproducible preparation pins 1.13.0 commit + SHA-256 |
 | GTest | Tests only | find_package(GTest 1.12 CONFIG REQUIRED); GTest::gtest | Distro/dev package; excluded with BUILD_TESTING=OFF |
 | tomlplusplus | Production (application configuration) | find_package(tomlplusplus 3 CONFIG REQUIRED); tomlplusplus::tomlplusplus | Header-only distro package (`tomlplusplus`, `libtomlplusplus-dev`); no pinned preparation |
 
@@ -23,6 +23,10 @@ A package manager such as vcpkg/Conan is unnecessary for this Linux-first scaffo
 `python3 scripts/deps.py` downloads and verifies it, configures library-only shared mode, builds with Ninja, and installs
 under `build/deps/prefix`. Upstream tests/examples are disabled; their qualification belongs upstream. Our tests verify
 consumer behavior. The same command runs locally and in CI. Python >=3.12 supplies safe tar extraction filtering.
+
+The 1.13 baseline retains upstream defaults: optional syntax backend off and bundled math backend on.
+Highlighting and math remain disabled per view; no additional code-block controls are enabled.
+See [SDD 0013](sdd/0013-qmarkdown-1.13.md) for the compatibility review and verification.
 
 An offline archive can be supplied with `--archive`. Downloads do not occur if that verified archive is provided.
 Source/build directories include the revision; the local prefix is dedicated to this project. After a provider major-version,

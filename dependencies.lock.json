@@ -1,8 +1,8 @@
 {
   "qmarkdown": {
-    "version": "1.10.0",
-    "revision": "efb2d35fbbbffbe7b45c7d11031072f753b4706d",
-    "url": "https://codeload.github.com/lebedenko/qmarkdown/tar.gz/efb2d35fbbbffbe7b45c7d11031072f753b4706d",
-    "sha256": "4da054b0e071d9508897eae9d1c156d3c208a4ed4b62fed069d597271449faac"
+    "version": "1.13.0",
+    "revision": "9e07d41da7ecef454a53e8d80a95abb9becc39e9",
+    "url": "https://codeload.github.com/lebedenko/qmarkdown/tar.gz/9e07d41da7ecef454a53e8d80a95abb9becc39e9",
+    "sha256": "934e0d3dd2dda1a565b10a416f1422ac4c56ed0f80496d672c5688021ca6028c"
   }
 }

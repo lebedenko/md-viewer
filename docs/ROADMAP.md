@@ -7,10 +7,11 @@ Native open-dialog and file-manager drop checks in SDD 0003 remain pending.
 ## 0 — Foundation
 
 Complete; local, hosted-main and owner-confirmed native evidence is recorded in
-[0002](sdd/0002-foundation-baseline.md). Hosted checks for the uncommitted 1.10 upgrade await a push.
+[0002](sdd/0002-foundation-baseline.md). Hosted and native checks for the 1.13 upgrade remain pending;
+see [0013](sdd/0013-qmarkdown-1.13.md).
 
 - [x] Independent C++23 / Qt Quick / CMake / Ninja project.
-- [x] External QMarkdown 1.10 package and explicit pinned preparation.
+- [x] External QMarkdown 1.13 package and explicit pinned preparation.
 - [x] GTest integration and application startup checks.
 - [x] clang-format, clang-tidy, qmllint and local acceptance entry point.
 - [x] SDD template, architecture, mockup notes, GitHub workflow files.
@@ -40,7 +41,7 @@ Exit: open a real document, read/copy comfortably, edit externally and see saved
 - [ ] Define and adopt required qmarkdown public APIs; update the dependency lock and consumer checks together.
 - [ ] Keyboard access to navigation controls and document links, subject to upstream support.
 
-QMarkdown 1.10 supplies headings, fragment navigation, literal Find with rendered highlights, navigation rectangles
+QMarkdown 1.13 supplies headings, fragment navigation, literal Find with rendered highlights, navigation rectangles
 and opt-in keyboard link traversal. Integrate these public APIs and define application history/restoration and
 update validity behavior in this milestone. No private API workaround is planned.
 Exit: follow a cross-document heading link, find text, copy it, return to the previous reading position, and reload safely.
