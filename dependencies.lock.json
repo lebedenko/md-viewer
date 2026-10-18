@@ -4,5 +4,19 @@
     "revision": "9e07d41da7ecef454a53e8d80a95abb9becc39e9",
     "url": "https://codeload.github.com/lebedenko/qmarkdown/tar.gz/9e07d41da7ecef454a53e8d80a95abb9becc39e9",
     "sha256": "934e0d3dd2dda1a565b10a416f1422ac4c56ed0f80496d672c5688021ca6028c"
+  },
+  "ecm": {
+    "version": "6.10.0",
+    "archive": "extra-cmake-modules-6.10.0.tar.xz",
+    "source": "extra-cmake-modules-6.10.0",
+    "url": "https://download.kde.org/stable/frameworks/6.10/extra-cmake-modules-6.10.0.tar.xz",
+    "sha256": "506989a0d400913403e669c1912238db053cd6b38dff74b17e2e6f879c79cca0"
+  },
+  "syntax-highlighting": {
+    "version": "6.10.0",
+    "archive": "syntax-highlighting-6.10.0.tar.xz",
+    "source": "syntax-highlighting-6.10.0",
+    "url": "https://download.kde.org/stable/frameworks/6.10/syntax-highlighting-6.10.0.tar.xz",
+    "sha256": "b5b5e343ff27bc5c95be0051d5606dfcb3295f835830e7fc6dac8d2863891699"
   }
 }

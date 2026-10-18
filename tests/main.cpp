@@ -1,9 +1,11 @@
 #include "appconfig.h"
 #include "clipboard.h"
 #include "documentsession.h"
+#include "navigationcontroller.h"
 
 #include <QGuiApplication>
 #include <QQmlEngine>
+#include <QStyleHints>
 #include <QTemporaryDir>
 
 #include <gtest/gtest.h>
@@ -21,6 +23,8 @@ int main(int argc, char* argv[]) {
   qputenv("HOME", config_home.path().toUtf8());
   qputenv("XDG_CONFIG_HOME", config_home.path().toUtf8());
   const QGuiApplication app(argc, argv);
+  QGuiApplication::styleHints()->setTabFocusBehavior(Qt::TabFocusAllControls);
+  qmlRegisterType<NavigationController>("MdViewer", 1, 0, "NavigationController");
   qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
   qmlRegisterType<AppConfig>("MdViewer", 1, 0, "AppConfig");
   qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",

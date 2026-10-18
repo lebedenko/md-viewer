@@ -241,3 +241,37 @@ TEST(AppConfig, UnreadableFileAfterLoadingIsPreserved) {
   EXPECT_EQ(readFile(path), original);
   EXPECT_TRUE(config.flush());
 }
+
+TEST(AppConfig, ReaderFeaturesValidateAndRoundTrip) {
+  const auto defaults = AppConfig::parse({});
+  ASSERT_TRUE(defaults);
+  EXPECT_TRUE(defaults->selection_enabled);
+  EXPECT_TRUE(defaults->math_enabled);
+  EXPECT_TRUE(defaults->highlighting_enabled);
+  EXPECT_FALSE(defaults->code_wrapping);
+  EXPECT_TRUE(defaults->line_numbers);
+  EXPECT_TRUE(defaults->height_limiting);
+  const auto invalid = AppConfig::parse("[reader]\nmath_enabled = 1\ncode_wrapping = 'yes'\n");
+  ASSERT_TRUE(invalid);
+  EXPECT_EQ(invalid->warnings.size(), 2);
+  EXPECT_TRUE(invalid->math_enabled);
+  QTemporaryDir dir;
+  const QString path = dir.filePath("config.toml");
+  {
+    AppConfig config({path});
+    config.setSelectionEnabled(false);
+    config.setMathEnabled(false);
+    config.setHighlightingEnabled(false);
+    config.setCodeWrapping(true);
+    config.setLineNumbers(false);
+    config.setHeightLimiting(false);
+    ASSERT_TRUE(config.flush());
+  }
+  AppConfig config({path});
+  EXPECT_FALSE(config.selectionEnabled());
+  EXPECT_FALSE(config.mathEnabled());
+  EXPECT_FALSE(config.highlightingEnabled());
+  EXPECT_TRUE(config.codeWrapping());
+  EXPECT_FALSE(config.lineNumbers());
+  EXPECT_FALSE(config.heightLimiting());
+}

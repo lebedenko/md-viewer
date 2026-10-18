@@ -28,15 +28,17 @@ qt_standard_project_setup(REQUIRES 6.8)
 qt_add_executable(mdv src/main.cpp)
 set_source_files_properties(qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
 set_source_files_properties(qml/ReaderPane.qml PROPERTIES QT_RESOURCE_ALIAS ReaderPane.qml)
+set_source_files_properties(qml/CodeHeader.qml PROPERTIES QT_RESOURCE_ALIAS CodeHeader.qml)
+set_source_files_properties(qml/CodeScrollBar.qml PROPERTIES QT_RESOURCE_ALIAS CodeScrollBar.qml)
 set_source_files_properties(qml/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
 qt_add_qml_module(mdv
   URI MdViewer
   VERSION 1.0
   # Shared providers are loaded through the QML engine, not static plugin imports.
   NO_IMPORT_SCAN
-  QML_FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml
+  QML_FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml
   SOURCES src/appconfig.h src/appconfig.cpp src/clipboard.h src/clipboard.cpp src/documentsession.h
-    src/documentsession.cpp
+    src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp
   IMPORT_PATH "${QMarkdown_QML_IMPORT_PATH}"
 )
 target_link_libraries(mdv PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent QMarkdown::QMarkdown
@@ -58,10 +60,10 @@ install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/RefreshDesktopCaches.cmake")
 if(BUILD_TESTING)
   find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
   find_package(GTest 1.12 CONFIG REQUIRED)
-  add_executable(reader-tests tests/main.cpp tests/reader_test.cpp tests/documentsession_test.cpp tests/drop_test.cpp tests/application_test.cpp tests/appconfig_test.cpp
-    src/appconfig.h src/appconfig.cpp src/documentsession.h src/documentsession.cpp src/clipboard.h src/clipboard.cpp)
+  add_executable(reader-tests tests/main.cpp tests/navigation_test.cpp tests/reader_test.cpp tests/documentsession_test.cpp tests/drop_test.cpp tests/application_test.cpp tests/appconfig_test.cpp
+    src/appconfig.h src/appconfig.cpp src/documentsession.h src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp src/clipboard.h src/clipboard.cpp)
   qt_add_resources(reader-tests "application-qml" PREFIX "/qt/qml/MdViewer"
-    FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml)
+    FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml)
   target_link_libraries(reader-tests PRIVATE GTest::gtest Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent Qt6::Test QMarkdown::QMarkdown
     tomlplusplus::tomlplusplus)
   target_include_directories(reader-tests PRIVATE src)

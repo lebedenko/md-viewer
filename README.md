@@ -3,10 +3,11 @@
 A standalone Qt Quick application for reading and navigating local Markdown documentation.
 Built with C++23, Qt 6.8+, and the external QMarkdown 1.13 library. Linux is the initial supported platform.
 
-**Current state: single-file reader.** Open local files from the command line, file dialog or drag and drop;
+**Current state: local documentation reader.** Open local files from the command line, file dialog or drag and drop;
 select and copy rendered text or code, adjust keyboard zoom and column width, and edit preferences in Settings.
 Preferences persist in TOML after a 250 ms pause in changes and flush on shutdown.
-Live reload, history, outline, search and folder browsing remain planned.
+Live reload, session Back/Forward history, outline, Find, keyboard links and directory-scoped local images are available.
+Folder browsing remains planned. Selection and active Find show math as TeX source.
 There is no HoloNight dependency, embedded editor, or Vim interaction layer.
 
 ## Start developing
@@ -19,7 +20,7 @@ Qt QML development tools (`qmllint`) and runtime Controls modules must be availa
 On Arch Linux, install prerequisites explicitly with your package manager:
 
 ```sh
-sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative gtest tomlplusplus clang python go-task
+sudo pacman -S --needed base-devel cmake ninja qt6-base qt6-declarative gtest tomlplusplus syntax-highlighting clang python go-task
 ```
 
 Then prepare the external renderer and verify the application:
@@ -123,3 +124,16 @@ systemctl --user restart xdg-desktop-portal.service
 
 For subsequent logins, include `~/.local/bin` in your desktop session's startup environment, then log out and back in.
 These commands change the running user-service environment; installation does not apply them automatically.
+
+## Reader features
+
+Ctrl+F opens Find; Enter/Shift+Enter and F3/Shift+F3 move between results. Escape closes Find and
+retains query/case. Ctrl+Shift+O toggles the outline. Alt+Left/Right navigate session history.
+Ctrl+A enables text selection and selects the document. Tab traverses document links when the reader has focus.
+Turn off **Select text** to view rendered math. Active Find also displays TeX source.
+
+The `[reader]` TOML booleans `selection_enabled`, `math_enabled`, `highlighting_enabled`, `line_numbers`, and
+`height_limiting` default to `true`; `code_wrapping` defaults to `false`. Settings exposes all six.
+Code blocks show language/Copy controls and occupy at most half the viewport within 8–30 line limits.
+Missing optional provider backends retain source/plain-code fallback and are explained in Settings.
+Local images are restricted to the loaded file's directory; remote images are denied.

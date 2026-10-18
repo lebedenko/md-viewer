@@ -30,20 +30,20 @@ see [0013](sdd/0013-qmarkdown-1.13.md).
 - [x] Small typography preferences; reader light/dark override ([0011](sdd/0011-typography-theme.md)).
 - [x] Live reload through ordinary and atomic saves, with proportional position preservation ([0012](sdd/0012-live-reload.md)); native check pending.
 - [ ] Configured external editor action; safe argument handling and failure feedback.
-- [ ] Conventional keyboard shortcuts and visible focus.
+- [x] Conventional keyboard shortcuts and visible focus ([0014](sdd/0014-qmarkdown-features.md)); full native input review pending.
 
 Exit: open a real document, read/copy comfortably, edit externally and see saved changes without disruptive jumps.
 
 ## 2 — Documentation navigation
 
-- [ ] Relative links, fragment navigation, Back/Forward and reading-position restoration.
-- [ ] Outline and rendered-text search with visible results.
-- [ ] Define and adopt required qmarkdown public APIs; update the dependency lock and consumer checks together.
-- [ ] Keyboard access to navigation controls and document links, subject to upstream support.
+- [x] Relative links, fragment navigation, Back/Forward and reading-position restoration.
+- [x] Outline and rendered-text search with visible results.
+- [x] Define and adopt required qmarkdown public APIs; update the dependency lock and consumer checks together.
+- [x] Keyboard access to navigation controls and document links, subject to upstream support.
 
 QMarkdown 1.13 supplies headings, fragment navigation, literal Find with rendered highlights, navigation rectangles
-and opt-in keyboard link traversal. Integrate these public APIs and define application history/restoration and
-update validity behavior in this milestone. No private API workaround is planned.
+and opt-in keyboard link traversal. Application integration and session history are implemented in [0014](sdd/0014-qmarkdown-features.md);
+verification limitations remain recorded there. No private API workaround is planned.
 Exit: follow a cross-document heading link, find text, copy it, return to the previous reading position, and reload safely.
 
 ## 3 — Folder browsing and continuity

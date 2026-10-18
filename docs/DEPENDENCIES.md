@@ -22,10 +22,15 @@ A package manager such as vcpkg/Conan is unnecessary for this Linux-first scaffo
 `dependencies.lock.json` records qmarkdown version, immutable commit, archive URL and SHA-256.
 `python3 scripts/deps.py` downloads and verifies it, configures library-only shared mode, builds with Ninja, and installs
 under `build/deps/prefix`. Upstream tests/examples are disabled; their qualification belongs upstream. Our tests verify
-consumer behavior. The same command runs locally and in CI. Python >=3.12 supplies safe tar extraction filtering.
+consumer behavior. CI additionally prepares the pinned KDE dependencies described below. Python >=3.12 supplies safe tar extraction filtering.
 
-The 1.13 baseline retains upstream defaults: optional syntax backend off and bundled math backend on.
-Highlighting and math remain disabled per view; no additional code-block controls are enabled.
+Preparation explicitly enables both math and KSyntaxHighlighting. Locally install a compatible KF6SyntaxHighlighting
+package (6.10 or newer, built with your Qt). Runtime fallback remains available, but acceptance requires both backends.
+For the CI Qt 6.8.3 SDK, use `python3 scripts/deps.py --prepare-kde` to checksum-verify and prepare ECM and
+KSyntaxHighlighting 6.10.0 into the dependency prefix before QMarkdown. Offline preparation accepts
+`--archive`, `--ecm-archive` and `--syntax-archive` together with `--prepare-kde`.
+All three archive hashes are recorded in the lock. KDE preparation skips translation processing and examples;
+Qt Linguist tools are not needed. This KDE version is for the Qt 6.8 SDK; use installed compatible KDE with newer Qt. These operations are explicit; app builds remain offline.
 See [SDD 0013](sdd/0013-qmarkdown-1.13.md) for the compatibility review and verification.
 
 An offline archive can be supplied with `--archive`. Downloads do not occur if that verified archive is provided.

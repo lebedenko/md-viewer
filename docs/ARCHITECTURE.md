@@ -6,7 +6,7 @@ A Linux-first standalone browser for local Markdown documentation. Qt/QML suppli
 qmarkdown supplies Markdown semantics, rendering and selection. There are no HoloNight libraries or services.
 External editing is planned through a configured editor; embedded editing is outside scope.
 
-## Implemented scaffold
+## Implemented reader
 
 ```text
 src/main.cpp -> QML engine -> Main.qml -> ReaderPane.qml -> QMarkdown 1.13
@@ -18,8 +18,12 @@ The `mdv` executable owns its MdViewer QML module. Main composes the window and 
 ReaderPane. ReaderPane owns its viewport, rendering style, selection enablement and code-copy controls.
 Main also provides a header/footer frame; ReaderPane selects qmarkdown's Polished preset from the system theme,
 keeps palette-bound color overrides and enables all GFM extensions.
-`AppConfig` reads and atomically writes the TOML preferences (zoom, column width, theme, fonts, spacing, link underline); `SettingsDialog` edits them (SDD 0008). Clipboard owns the operating-system clipboard write. With no file argument the initial document is bundled text. `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003. It also watches the file and its directory and reloads saves after a debounce (SDD 0012).
-Images remain denied by qmarkdown's default resource policy. Link navigation is not implemented in the scaffold.
+`AppConfig` reads and atomically writes TOML preferences (zoom, column width, theme, fonts, spacing, link underline,
+selection, math, highlighting and code controls); `SettingsDialog` edits them (SDD 0008). Clipboard owns the operating-system clipboard write. With no file argument the initial document is bundled text. `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003. It also watches the file and its directory and reloads saves after a debounce (SDD 0012).
+NavigationController owns DocumentSession, relative link resolution, desktop HTTP(S) launching and in-memory
+Back/Forward history. ReaderPane uses public Find, heading, fragment and navigation rectangles; positions restore
+proportionally. Local images are authorized only under the successfully opened document directory; remote images
+remain denied. Selection, math, highlighting and code controls are preferences; see SDD 0014.
 Standard runtime Controls allow user-selected installed styles without a direct dependency on any specific style.
 
 The CMake project consumes installed shared QMarkdown. BUILD_TESTING adds GTest; Release needs no GTest.
@@ -27,7 +31,7 @@ The renderer import directory comes from the selected package, not a source chec
 The installed app records that provider QML path and library directory (install RPATH); a package distributor must build against its final
 provider prefix. Relocatable bundles and static-provider deployment are future packaging work.
 
-## Planned application boundaries
+## Application boundaries
 
 | Component | Owns | Does not own |
 | --- | --- | --- |
@@ -41,24 +45,24 @@ Keep these internal initially. Introduce types as features need them; do not cre
 Use asynchronous file I/O with revision/generation checks so obsolete work cannot replace a newer document.
 Keep logical document position, selection state and viewport offset distinct.
 
-## File and navigation contracts to specify
+## File and navigation contracts
 
 - Treat the document URL and fragment separately; resolve relative destinations against the document URL.
 - Load local Markdown internally, open supported web URLs through the desktop, and explicitly define other schemes.
 - History stores a restoration location as well as the document URL; Back must accompany link navigation.
 - Watch the file and parent directory, debounce saves, and reattach after atomic replacement.
 - Keep the last successfully loaded content during transient save/reload failures and present clear failure state.
-- Prefer semantic heading restoration when supported; use a documented proportional fallback otherwise.
-- Resolve local image permissions against the opened file/folder scope. Remote resources require a deliberate policy.
+- Explicit heading actions use renderer navigation; history and reload positions restore proportionally (SDD 0014).
+- Authorize the opened file directory for local images, including canonical traversal/symlink checks upstream; deny remote images.
 - Use one renderer-supported rendered-text coordinate system for search/selection; source offsets are distinct.
-- Decide anchor slugging, duplicate-heading behavior and location lifetime with the upstream API.
+- Delegate heading slugging, duplicate-heading IDs and fragment resolution to QMarkdown's public API.
 - Preferences live in a TOML file (`AppConfig`, SDD 0007): `$XDG_CONFIG_HOME/md-viewer/config.toml`, else `~/.config/md-viewer.toml`.
 
 ## Renderer prerequisites
 
 QMarkdown 1.13 provides native rendering, optional GFM, selection/plain-text copy and code-copy actions, headings,
 fragment navigation, literal Find with rendered highlights, navigation rectangles and opt-in keyboard link traversal.
-Application integration for outline, navigation and Find remains in later milestones.
+Outline, navigation and Find are integrated through these public APIs (SDD 0014).
 Do not implement regex Markdown parsing or inspect renderer delegates to bridge the gap.
 
 Use an application-local adapter only when needed to translate public qmarkdown APIs into application state.
@@ -68,7 +72,7 @@ Do not build a generic multi-renderer abstraction: qmarkdown is the intended ren
 
 Measure real documents before optimizing. Initially replace source snapshots on save and debounce updates.
 Large-document performance and selection improvements are relevant upstream work; streaming is not required for
-saved-file reading. Extension renderers can enable syntax highlighting or diagrams later without viewer-specific syntax.
+saved-file reading. Syntax highlighting uses the optional provider backend. Future extension renderers may add diagrams without viewer-specific syntax.
 Share qmarkdown with other applications. Extract reader/controller libraries only after concrete reuse emerges.
 
 ## Verification boundaries

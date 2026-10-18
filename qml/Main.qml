@@ -9,7 +9,7 @@ Controls.ApplicationWindow {
     property string initialPath
     readonly property string documentTitle: session.title || qsTr("Markdown Viewer")
     readonly property string documentSource: session.revision === 0 ? qsTr("Bundled sample") : session.displayPath
-    readonly property string statusMessage: session.error ? "\u26A0 " + session.error
+    readonly property string statusMessage: navigation.error ? "⚠ " + navigation.error : session.error ? "\u26A0 " + session.error
         : (session.warning ? "\u26A0 " + session.warning : "")
     readonly property string sampleMarkdown: "# Markdown Viewer\n\nA comfortable place to read local Markdown documents.\n\n## Reading\n\nSelect text to copy it, or try the copy action on this code block.\n\n```sh\necho 'Hello, Markdown'\n```\n\n## GitHub Flavored Markdown\n\n| Feature | Status |\n| :--- | ---: |\n| Tables | ready |\n| Task lists | ready |\n\n- [x] Strikethrough: ~~old~~ new\n- [x] Open files\n\nAutolink: https://www.qt.io\n\nOpen a file with Ctrl+O, drop one onto this window, or pass a path on the command line."
 
@@ -18,13 +18,12 @@ Controls.ApplicationWindow {
     visible: true
     title: documentTitle
 
-    DocumentSession {
-        id: session
-    }
+    readonly property DocumentSession session: navigation.session
+    NavigationController { id: navigation }
 
     Component.onCompleted: {
         if (initialPath)
-            session.openPath(initialPath)
+            navigation.openPath(initialPath)
     }
 
     readonly property var zoomSteps: [0.5, 0.67, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0]
@@ -90,12 +89,19 @@ Controls.ApplicationWindow {
         onActivated: settingsDialog.open()
     }
 
+    Shortcut { sequence: "Ctrl+F"; onActivated: reader.openFind() }
+    Shortcut { sequence: "Ctrl+Shift+O"; onActivated: reader.outlineVisible = !reader.outlineVisible }
+    Shortcut { sequence: "Alt+Left"; onActivated: navigation.back() }
+    Shortcut { sequence: "Alt+Right"; onActivated: navigation.forward() }
+    Shortcut { sequence: "Ctrl+A"; onActivated: { config.selectionEnabled = true; reader.selectAll() } }
     SettingsDialog {
         id: settingsDialog
         objectName: "settingsDialog"
         appConfig: config
         widthPresets: window.widthPresets
         themes: window.themes
+        mathAvailable: reader.mathAvailable
+        highlightingAvailable: reader.highlightingAvailable
     }
 
     FileDialog {
@@ -103,7 +109,7 @@ Controls.ApplicationWindow {
         title: qsTr("Open Markdown file")
         fileMode: FileDialog.OpenFile
         nameFilters: [qsTr("Markdown files (*.md *.markdown)"), qsTr("All files (*)")]
-        onAccepted: session.open(selectedFile)
+        onAccepted: navigation.open(selectedFile)
     }
 
     header: Controls.ToolBar {
@@ -113,6 +119,17 @@ Controls.ApplicationWindow {
             anchors.rightMargin: 8
             spacing: 8
 
+            Controls.ToolButton { text: qsTr("Back"); enabled: navigation.canGoBack; onClicked: navigation.back() }
+            Controls.ToolButton { text: qsTr("Forward"); enabled: navigation.canGoForward; onClicked: navigation.forward() }
+            Controls.ToolButton { text: qsTr("Outline"); checkable: true; checked: reader.outlineVisible; onClicked: reader.outlineVisible = checked }
+            Controls.ToolButton { text: qsTr("Find"); onClicked: reader.openFind() }
+            Controls.CheckBox {
+                text: qsTr("Select text")
+                checked: config.selectionEnabled
+                onToggled: config.selectionEnabled = checked
+                Controls.ToolTip.text: qsTr("Selection displays math as TeX source")
+                Controls.ToolTip.visible: hovered
+            }
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 0
@@ -180,21 +197,48 @@ Controls.ApplicationWindow {
         blockSpacingScale: config.blockSpacing
         linkUnderline: config.linkUnderline
         maxColumnWidth: window.widthPresets[window.widthPresetIndex].width
-        markdown: session.revision === 0 ? window.sampleMarkdown : session.markdown
+        markdown: window.session.revision === 0 ? window.sampleMarkdown : window.session.markdown
+        selectionEnabled: config.selectionEnabled
+        mathEnabled: config.mathEnabled
+        highlightingEnabled: config.highlightingEnabled
+        codeWrapping: config.codeWrapping
+        lineNumbers: config.lineNumbers
+        heightLimiting: config.heightLimiting
+        baseUrl: window.session.url
+        imageRoots: window.session.revision > 0 ? [navigation.imageRoot] : []
+        onPositionChanged: fraction => navigation.setPosition(fraction)
+        onLinkActivated: destination => navigation.activate(destination)
+        onMissingFragment: fragment => navigation.missingFragment(fragment)
         onCopyRequested: function(text) { Clipboard.copyText(text) }
     }
 
     Connections {
-        target: session
+        target: window.session
         function onStateChanged() {
-            if (session.state === DocumentSession.Loading)
-                reader.savePosition()
+            if (window.session.state === DocumentSession.Loading) {
+                ++window.restorationIntent
+                reader.restoring = true
+            } else if (window.session.state === DocumentSession.Failed) {
+                reader.restoring = false
+            }
         }
-        function onDocumentChanged() {
-            if (session.reloaded)
-                reader.restorePosition()
-            else
-                reader.resetScroll()
+    }
+    property int restorationIntent: 0
+    Connections {
+        target: navigation
+        function onNavigating() { ++window.restorationIntent; reader.restoring = false; reader.closeFind() }
+        function onRestoreRequested(fraction, fragment, reload, newDocument) {
+            const intent = ++window.restorationIntent
+            if (!newDocument) {
+                reader.restore(fraction, fragment, reload, false)
+                return
+            }
+            reader.restoring = true
+            reader.navigationAllowed = true
+            Qt.callLater(function() {
+                if (intent === window.restorationIntent && reader.navigationAllowed)
+                    reader.restore(fraction, fragment, reload, true)
+            })
         }
     }
 
@@ -209,7 +253,7 @@ Controls.ApplicationWindow {
             if (!drop.hasUrls || drop.urls.length === 0 || (drop.supportedActions & Qt.CopyAction) === 0)
                 return
             const url = drop.urls[0]
-            session.open(url)
+            navigation.open(url)
             if (url.toString().toLowerCase().startsWith("file:"))
                 drop.accept(Qt.CopyAction)
         }

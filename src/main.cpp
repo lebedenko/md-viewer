@@ -2,10 +2,12 @@
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
+#include <QStyleHints>
 #include <QTimer>
 
 int main(int argc, char* argv[]) {
   const QGuiApplication app(argc, argv);
+  QGuiApplication::styleHints()->setTabFocusBehavior(Qt::TabFocusAllControls);
   QCoreApplication::setApplicationName(QStringLiteral("mdv"));
   QGuiApplication::setApplicationDisplayName(QStringLiteral("Markdown Viewer"));
   QGuiApplication::setDesktopFileName(QStringLiteral("mdv"));

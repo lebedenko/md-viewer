@@ -82,9 +82,37 @@ void applyWidth(const toml::node& node, AppConfig::Values& values) {
   }
 }
 
+bool applyBoolean(std::string_view name, const toml::node& node, AppConfig::Values& values) {
+  struct Preference {
+    std::string_view name;
+    bool AppConfig::Values::* member;
+  };
+  static constexpr std::array preferences = {
+      Preference{.name = "selection_enabled", .member = &AppConfig::Values::selection_enabled},
+      Preference{.name = "math_enabled", .member = &AppConfig::Values::math_enabled},
+      Preference{.name = "highlighting_enabled", .member = &AppConfig::Values::highlighting_enabled},
+      Preference{.name = "code_wrapping", .member = &AppConfig::Values::code_wrapping},
+      Preference{.name = "line_numbers", .member = &AppConfig::Values::line_numbers},
+      Preference{.name = "height_limiting", .member = &AppConfig::Values::height_limiting},
+      Preference{.name = "link_underline", .member = &AppConfig::Values::link_underline}};
+  const auto* found = std::ranges::find(preferences, name, &Preference::name);
+  if (found == preferences.end()) {
+    return false;
+  }
+  if (node.is_boolean()) {
+    values.*found->member = *node.value<bool>();
+  } else {
+    values.warnings.append(QStringLiteral("reader.%1 must be true or false").arg(toQString(name)));
+  }
+  return true;
+}
+
 void applyReader(const toml::table& reader, AppConfig::Values& values) {
   for (const auto& [key, node] : reader) {
     const std::string_view name = key.str();
+    if (applyBoolean(name, node, values)) {
+      continue;
+    }
     if (name == "zoom") {
       applyNumber(node, "zoom", AppConfig::kMinZoom, AppConfig::kMaxZoom, values.zoom, values.warnings);
     } else if (name == "column_width") {
@@ -98,12 +126,6 @@ void applyReader(const toml::table& reader, AppConfig::Values& values) {
     } else if (name == "block_spacing") {
       applyNumber(node, "block_spacing", AppConfig::kMinBlockSpacing, AppConfig::kMaxBlockSpacing, values.block_spacing,
                   values.warnings);
-    } else if (name == "link_underline") {
-      if (const auto underline = node.value<bool>()) {
-        values.link_underline = *underline;
-      } else {
-        values.warnings.append(QStringLiteral("reader.link_underline must be true or false"));
-      }
     } else {
       values.warnings.append(QStringLiteral("unknown key 'reader.%1'").arg(toQString(name)));
     }
@@ -279,6 +301,60 @@ void AppConfig::setLinkUnderline(bool underline) {
   scheduleSave();
 }
 
+void AppConfig::setSelectionEnabled(bool value) {
+  if (value == values_.selection_enabled) {
+    return;
+  }
+  values_.selection_enabled = value;
+  emit selectionEnabledChanged();
+  scheduleSave();
+}
+
+void AppConfig::setMathEnabled(bool value) {
+  if (value == values_.math_enabled) {
+    return;
+  }
+  values_.math_enabled = value;
+  emit mathEnabledChanged();
+  scheduleSave();
+}
+
+void AppConfig::setHighlightingEnabled(bool value) {
+  if (value == values_.highlighting_enabled) {
+    return;
+  }
+  values_.highlighting_enabled = value;
+  emit highlightingEnabledChanged();
+  scheduleSave();
+}
+
+void AppConfig::setCodeWrapping(bool value) {
+  if (value == values_.code_wrapping) {
+    return;
+  }
+  values_.code_wrapping = value;
+  emit codeWrappingChanged();
+  scheduleSave();
+}
+
+void AppConfig::setLineNumbers(bool value) {
+  if (value == values_.line_numbers) {
+    return;
+  }
+  values_.line_numbers = value;
+  emit lineNumbersChanged();
+  scheduleSave();
+}
+
+void AppConfig::setHeightLimiting(bool value) {
+  if (value == values_.height_limiting) {
+    return;
+  }
+  values_.height_limiting = value;
+  emit heightLimitingChanged();
+  scheduleSave();
+}
+
 void AppConfig::setError(const QString& error) {
   if (error != error_) {
     error_ = error;
@@ -327,6 +403,12 @@ bool AppConfig::save() {
   reader.insert_or_assign("code_font", values_.code_font.toStdString());
   reader.insert_or_assign("block_spacing", values_.block_spacing);
   reader.insert_or_assign("link_underline", values_.link_underline);
+  reader.insert_or_assign("selection_enabled", values_.selection_enabled);
+  reader.insert_or_assign("math_enabled", values_.math_enabled);
+  reader.insert_or_assign("highlighting_enabled", values_.highlighting_enabled);
+  reader.insert_or_assign("code_wrapping", values_.code_wrapping);
+  reader.insert_or_assign("line_numbers", values_.line_numbers);
+  reader.insert_or_assign("height_limiting", values_.height_limiting);
   std::ostringstream out;
   out << table << '\n';
   const std::string text = out.str();

@@ -42,7 +42,7 @@ jobs:
           qmake -query QT_VERSION
           dpkg-query -W libgtest-dev
       - name: Prepare pinned external renderer
-        run: python3 scripts/deps.py
+        run: python3 scripts/deps.py --prepare-kde
       - name: Validate
         run: python3 scripts/check.py
       - name: Upload diagnostics

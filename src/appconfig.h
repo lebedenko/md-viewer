@@ -21,6 +21,13 @@ class AppConfig : public QObject {
   Q_PROPERTY(QString codeFont READ codeFont WRITE setCodeFont NOTIFY codeFontChanged)
   Q_PROPERTY(double blockSpacing READ blockSpacing WRITE setBlockSpacing NOTIFY blockSpacingChanged)
   Q_PROPERTY(bool linkUnderline READ linkUnderline WRITE setLinkUnderline NOTIFY linkUnderlineChanged)
+  Q_PROPERTY(bool selectionEnabled READ selectionEnabled WRITE setSelectionEnabled NOTIFY selectionEnabledChanged)
+  Q_PROPERTY(bool mathEnabled READ mathEnabled WRITE setMathEnabled NOTIFY mathEnabledChanged)
+  Q_PROPERTY(
+      bool highlightingEnabled READ highlightingEnabled WRITE setHighlightingEnabled NOTIFY highlightingEnabledChanged)
+  Q_PROPERTY(bool codeWrapping READ codeWrapping WRITE setCodeWrapping NOTIFY codeWrappingChanged)
+  Q_PROPERTY(bool lineNumbers READ lineNumbers WRITE setLineNumbers NOTIFY lineNumbersChanged)
+  Q_PROPERTY(bool heightLimiting READ heightLimiting WRITE setHeightLimiting NOTIFY heightLimitingChanged)
   Q_PROPERTY(QString path READ path CONSTANT)
   Q_PROPERTY(QString error READ error NOTIFY errorChanged)
 
@@ -49,6 +56,12 @@ class AppConfig : public QObject {
     QString code_font;
     double block_spacing = 1.0;  // multiplier of the preset's block spacing
     bool link_underline = true;
+    bool selection_enabled = true;
+    bool math_enabled = true;
+    bool highlighting_enabled = true;
+    bool code_wrapping = false;
+    bool line_numbers = true;
+    bool height_limiting = true;
     QStringList warnings;  // unknown keys and invalid values; the file is still usable
   };
 
@@ -70,6 +83,18 @@ class AppConfig : public QObject {
   [[nodiscard]] QString codeFont() const { return values_.code_font; }
   [[nodiscard]] double blockSpacing() const { return values_.block_spacing; }
   [[nodiscard]] bool linkUnderline() const { return values_.link_underline; }
+  [[nodiscard]] bool selectionEnabled() const { return values_.selection_enabled; }
+  void setSelectionEnabled(bool value);
+  [[nodiscard]] bool mathEnabled() const { return values_.math_enabled; }
+  void setMathEnabled(bool value);
+  [[nodiscard]] bool highlightingEnabled() const { return values_.highlighting_enabled; }
+  void setHighlightingEnabled(bool value);
+  [[nodiscard]] bool codeWrapping() const { return values_.code_wrapping; }
+  void setCodeWrapping(bool value);
+  [[nodiscard]] bool lineNumbers() const { return values_.line_numbers; }
+  void setLineNumbers(bool value);
+  [[nodiscard]] bool heightLimiting() const { return values_.height_limiting; }
+  void setHeightLimiting(bool value);
   [[nodiscard]] QString path() const { return path_; }
   [[nodiscard]] QString error() const { return error_; }
   void setZoom(double zoom);
@@ -88,6 +113,12 @@ class AppConfig : public QObject {
   void codeFontChanged();
   void blockSpacingChanged();
   void linkUnderlineChanged();
+  void selectionEnabledChanged();
+  void mathEnabledChanged();
+  void highlightingEnabledChanged();
+  void codeWrappingChanged();
+  void lineNumbersChanged();
+  void heightLimitingChanged();
   void errorChanged();
 
  private:

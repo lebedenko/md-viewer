@@ -48,7 +48,7 @@ DocumentSession::DocumentSession(QObject* parent) : QObject(parent) {
   connect(&watcher_, &QFileSystemWatcher::directoryChanged, &reload_timer_, qOverload<>(&QTimer::start));
   connect(&reload_timer_, &QTimer::timeout, this, [this] {
     const QString path = url_.toLocalFile();
-    if (!path.isEmpty()) {
+    if (!path.isEmpty() && state_ != State::Loading) {
       load(path, true);
     }
   });
@@ -119,6 +119,7 @@ void DocumentSession::openPath(const QString& path) {
 }
 
 void DocumentSession::load(const QString& path, bool reload) {
+  reload_timer_.stop();
   const quint64 generation = ++generation_;
   state_ = State::Loading;
   error_.clear();
