@@ -30,7 +30,7 @@ in [0016](sdd/0016-qmarkdown-1.14.md).
 - [x] Toolbar settings button and modal settings window ([0008](sdd/0008-settings-window.md)).
 - [x] Small typography preferences; reader light/dark override ([0011](sdd/0011-typography-theme.md)).
 - [x] Live reload through ordinary and atomic saves, with proportional position preservation ([0012](sdd/0012-live-reload.md)); native check pending.
-- [ ] Configured external editor action; safe argument handling and failure feedback.
+- [x] Configured external editor action; safe argument handling and failure feedback ([0017](sdd/0017-external-editor.md)); native check pending.
 - [x] Conventional keyboard shortcuts and visible focus ([0014](sdd/0014-qmarkdown-features.md)); full native input review pending.
 
 Exit: open a real document, read/copy comfortably, edit externally and see saved changes without disruptive jumps.

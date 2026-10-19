@@ -2,6 +2,7 @@
 #include "application_harness.h"
 #include "clipboard.h"
 #include "documentsession.h"
+#include "editorlauncher.h"
 #include "navigationcontroller.h"
 
 #include <QCoreApplication>
@@ -336,4 +337,100 @@ TEST(ApplicationReaderFeatures, KeyboardLinkTraversalActivatesThroughController)
   QTest::keyClick(window, Qt::Key_Tab);
   QTest::keyClick(window, Qt::Key_Return);
   EXPECT_EQ(launches, 2);
+}
+
+TEST(ApplicationEditor, ShortcutLaunchesConfiguredEditorOnlyForOpenedFiles) {
+  ApplicationHarness harness;
+  ASSERT_NE(harness.root, nullptr) << harness.error.toStdString();
+  auto* window = qobject_cast<QQuickWindow*>(harness.root.get());
+  auto* nav = harness.root->findChild<NavigationController*>();
+  auto* launcher = harness.root->findChild<EditorLauncher*>();
+  auto* button = harness.root->findChild<QQuickItem*>(QStringLiteral("editButton"));
+  ASSERT_NE(window, nullptr);
+  ASSERT_NE(nav, nullptr);
+  ASSERT_NE(launcher, nullptr);
+  ASSERT_NE(button, nullptr);
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  const QString marker = dir.filePath("marker.txt");
+  const QString script = dir.filePath("editor.sh");
+  QFile editor(script);
+  ASSERT_TRUE(editor.open(QIODevice::WriteOnly));
+  editor.write(QStringLiteral("#!/bin/sh\nprintf '%s' \"$1\" > '%1'\n").arg(marker).toUtf8());
+  editor.close();
+  ASSERT_TRUE(editor.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+  launcher->setCommand({script, "{file}"});
+  EXPECT_FALSE(button->isEnabled());
+  QTest::keyClick(window, Qt::Key_E, Qt::ControlModifier);
+  QTest::qWait(200);
+  EXPECT_FALSE(QFileInfo::exists(marker));
+  QFile document(dir.filePath("a.md"));
+  ASSERT_TRUE(document.open(QIODevice::WriteOnly));
+  document.write("# A\n");
+  document.close();
+  nav->openPath(document.fileName());
+  QTRY_VERIFY_WITH_TIMEOUT(button->isEnabled(), 5000);
+  QTest::keyClick(window, Qt::Key_E, Qt::ControlModifier);
+  QTRY_VERIFY_WITH_TIMEOUT(QFileInfo::exists(marker) && QFileInfo(marker).size() > 0, 5000);
+  QFile recorded(marker);
+  ASSERT_TRUE(recorded.open(QIODevice::ReadOnly));
+  EXPECT_EQ(QFileInfo(QString::fromUtf8(recorded.readAll())).fileName(), QStringLiteral("a.md"));
+}
+
+TEST(ApplicationEditor, LatestFailureWinsAndOnlyItsOriginCanClearIt) {
+  ApplicationHarness harness;
+  ASSERT_NE(harness.root, nullptr) << harness.error.toStdString();
+  auto* window = qobject_cast<QQuickWindow*>(harness.root.get());
+  auto* nav = harness.root->findChild<NavigationController*>();
+  auto* launcher = harness.root->findChild<EditorLauncher*>();
+  auto* button = harness.root->findChild<QQuickItem*>(QStringLiteral("editButton"));
+  ASSERT_NE(window, nullptr);
+  ASSERT_NE(nav, nullptr);
+  ASSERT_NE(launcher, nullptr);
+  ASSERT_NE(button, nullptr);
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  const QString path = dir.filePath("a.md");
+  QFile file(path);
+  ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+  file.write("# A\n");
+  file.close();
+  nav->openPath(path);
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->state() == DocumentSession::State::Ready, 5000);
+  launcher->setCommand({dir.filePath("missing-editor")});
+  const auto status = [&] { return window->property("statusMessage").toString(); };
+  nav->missingFragment("missing");
+  EXPECT_TRUE(status().contains(nav->error()));
+  ASSERT_TRUE(QMetaObject::invokeMethod(button, "clicked"));
+  EXPECT_TRUE(status().contains(launcher->error()));
+  const QString editorError = launcher->error();
+  nav->setPosition(0.5);
+  nav->activate("#a");
+  EXPECT_EQ(status(), QString::fromUtf8("⚠ ") + editorError);
+  nav->missingFragment("missing");
+  EXPECT_TRUE(status().contains(nav->error()));
+  window->requestActivate();
+  QTest::qWait(100);
+  QTest::keyClick(window, Qt::Key_E, Qt::ControlModifier);
+  EXPECT_EQ(status(), QString::fromUtf8("⚠ ") + editorError);
+  nav->openPath(dir.filePath("missing.md"));
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->state() == DocumentSession::State::Failed, 5000);
+  EXPECT_TRUE(status().contains(nav->session()->error()));
+  launcher->setCommand({"/bin/true"});
+  ASSERT_TRUE(launcher->openInEditor(nav->session()->url()));
+  EXPECT_TRUE(status().contains(nav->session()->error()));
+  nav->openPath(path);
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->state() == DocumentSession::State::Ready, 5000);
+  EXPECT_TRUE(status().isEmpty());
+  launcher->setCommand({dir.filePath("missing-editor")});
+  ASSERT_FALSE(launcher->openInEditor(nav->session()->url()));
+  ASSERT_TRUE(QFile::remove(path));
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->state() == DocumentSession::State::Failed, 5000);
+  EXPECT_TRUE(status().contains(nav->session()->error()));
+  ASSERT_FALSE(launcher->openInEditor(nav->session()->url()));
+  EXPECT_EQ(status(), QString::fromUtf8("⚠ ") + editorError);
+  nav->missingFragment("missing");
+  EXPECT_TRUE(status().contains(nav->error()));
+  nav->activate("#a");
+  EXPECT_TRUE(status().isEmpty());
 }

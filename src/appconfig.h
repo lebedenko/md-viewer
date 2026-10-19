@@ -28,6 +28,7 @@ class AppConfig : public QObject {
   Q_PROPERTY(bool codeWrapping READ codeWrapping WRITE setCodeWrapping NOTIFY codeWrappingChanged)
   Q_PROPERTY(bool lineNumbers READ lineNumbers WRITE setLineNumbers NOTIFY lineNumbersChanged)
   Q_PROPERTY(bool heightLimiting READ heightLimiting WRITE setHeightLimiting NOTIFY heightLimitingChanged)
+  Q_PROPERTY(QStringList editorCommand READ editorCommand CONSTANT)
   Q_PROPERTY(QString path READ path CONSTANT)
   Q_PROPERTY(QString error READ error NOTIFY errorChanged)
 
@@ -62,7 +63,8 @@ class AppConfig : public QObject {
     bool code_wrapping = false;
     bool line_numbers = true;
     bool height_limiting = true;
-    QStringList warnings;  // unknown keys and invalid values; the file is still usable
+    QStringList editor_command;  // argv with optional {file}; empty: the desktop's default handler
+    QStringList warnings;        // unknown keys and invalid values; the file is still usable
   };
 
   // $XDG_CONFIG_HOME/md-viewer/config.toml (absolute XDG only), then ~/.config/md-viewer.toml.
@@ -95,6 +97,7 @@ class AppConfig : public QObject {
   void setLineNumbers(bool value);
   [[nodiscard]] bool heightLimiting() const { return values_.height_limiting; }
   void setHeightLimiting(bool value);
+  [[nodiscard]] QStringList editorCommand() const { return values_.editor_command; }
   [[nodiscard]] QString path() const { return path_; }
   [[nodiscard]] QString error() const { return error_; }
   void setZoom(double zoom);

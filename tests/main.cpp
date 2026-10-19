@@ -1,6 +1,7 @@
 #include "appconfig.h"
 #include "clipboard.h"
 #include "documentsession.h"
+#include "editorlauncher.h"
 #include "navigationcontroller.h"
 
 #include <QGuiApplication>
@@ -27,6 +28,7 @@ int main(int argc, char* argv[]) {
   qmlRegisterType<NavigationController>("MdViewer", 1, 0, "NavigationController");
   qmlRegisterType<DocumentSession>("MdViewer", 1, 0, "DocumentSession");
   qmlRegisterType<AppConfig>("MdViewer", 1, 0, "AppConfig");
+  qmlRegisterType<EditorLauncher>("MdViewer", 1, 0, "EditorLauncher");
   qmlRegisterSingletonType<Clipboard>("MdViewer", 1, 0, "Clipboard",
                                       [](QQmlEngine*, QJSEngine*) -> QObject* { return new Clipboard; });
   ::testing::InitGoogleTest(&argc, argv);

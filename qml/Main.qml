@@ -9,8 +9,22 @@ Controls.ApplicationWindow {
     property string initialPath
     readonly property string documentTitle: session.title || qsTr("Markdown Viewer")
     readonly property string documentSource: session.revision === 0 ? qsTr("Bundled sample") : session.displayPath
-    readonly property string statusMessage: navigation.error ? "⚠ " + navigation.error : session.error ? "\u26A0 " + session.error
+    property string displayedFailure: ""
+    property var failureOrigin: null
+    readonly property string statusMessage: displayedFailure ? "\u26A0 " + displayedFailure
         : (session.warning ? "\u26A0 " + session.warning : "")
+
+    function reportFailure(origin, message) {
+        failureOrigin = origin
+        displayedFailure = message
+    }
+
+    function clearFailure(origin) {
+        if (failureOrigin === origin) {
+            displayedFailure = ""
+            failureOrigin = null
+        }
+    }
     readonly property string sampleMarkdown: "# Markdown Viewer\n\nA comfortable place to read local Markdown documents.\n\n## Reading\n\nSelect text to copy it, or try the copy action on this code block.\n\n```sh\necho 'Hello, Markdown'\n```\n\n## GitHub Flavored Markdown\n\n| Feature | Status |\n| :--- | ---: |\n| Tables | ready |\n| Task lists | ready |\n\n- [x] Strikethrough: ~~old~~ new\n- [x] Open files\n\nAutolink: https://www.qt.io\n\nOpen a file with Ctrl+O, drop one onto this window, or pass a path on the command line."
 
     width: 960
@@ -20,6 +34,8 @@ Controls.ApplicationWindow {
 
     readonly property DocumentSession session: navigation.session
     NavigationController { id: navigation }
+    EditorLauncher { id: editor; command: config.editorCommand }
+    readonly property bool canEdit: session.revision > 0 && session.url.toString() !== ""
 
     Component.onCompleted: {
         if (initialPath)
@@ -89,6 +105,7 @@ Controls.ApplicationWindow {
         onActivated: settingsDialog.open()
     }
 
+    Shortcut { sequence: "Ctrl+E"; enabled: window.canEdit; onActivated: editor.openInEditor(window.session.url) }
     Shortcut { sequence: "Ctrl+F"; onActivated: reader.openFind() }
     Shortcut { sequence: "Ctrl+Shift+O"; onActivated: reader.outlineVisible = !reader.outlineVisible }
     Shortcut { sequence: "Alt+Left"; onActivated: navigation.back() }
@@ -123,6 +140,14 @@ Controls.ApplicationWindow {
             Controls.ToolButton { text: qsTr("Forward"); enabled: navigation.canGoForward; onClicked: navigation.forward() }
             Controls.ToolButton { text: qsTr("Outline"); checkable: true; checked: reader.outlineVisible; onClicked: reader.outlineVisible = checked }
             Controls.ToolButton { text: qsTr("Find"); onClicked: reader.openFind() }
+            Controls.ToolButton {
+                objectName: "editButton"
+                text: qsTr("Edit")
+                enabled: window.canEdit
+                Controls.ToolTip.text: qsTr("Open in editor (Ctrl+E)")
+                Controls.ToolTip.visible: hovered
+                onClicked: editor.openInEditor(window.session.url)
+            }
             Controls.CheckBox {
                 text: qsTr("Select text")
                 checked: config.selectionEnabled
@@ -215,6 +240,10 @@ Controls.ApplicationWindow {
     Connections {
         target: window.session
         function onStateChanged() {
+            if (window.session.state === DocumentSession.Failed)
+                window.reportFailure(window.session, window.session.error)
+            else if (!window.session.error)
+                window.clearFailure(window.session)
             if (window.session.state === DocumentSession.Loading) {
                 ++window.restorationIntent
                 reader.restoring = true
@@ -223,9 +252,22 @@ Controls.ApplicationWindow {
             }
         }
     }
+    Connections {
+        target: editor
+        function onErrorOccurred(message) { window.reportFailure(editor, message) }
+        function onErrorChanged() {
+            if (!editor.error)
+                window.clearFailure(editor)
+        }
+    }
     property int restorationIntent: 0
     Connections {
         target: navigation
+        function onErrorOccurred(message) { window.reportFailure(navigation, message) }
+        function onChanged() {
+            if (!navigation.error)
+                window.clearFailure(navigation)
+        }
         function onNavigating() { ++window.restorationIntent; reader.restoring = false; reader.closeFind() }
         function onRestoreRequested(fraction, fragment, reload, newDocument) {
             const intent = ++window.restorationIntent

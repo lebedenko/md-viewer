@@ -137,3 +137,14 @@ The `[reader]` TOML booleans `selection_enabled`, `math_enabled`, `highlighting_
 Code blocks show language/Copy controls and occupy at most half the viewport within 8–30 line limits.
 Missing optional provider backends retain source/plain-code fallback and are explained in Settings.
 Local images are restricted to the loaded file's directory; remote images are denied.
+
+Ctrl+E (toolbar Edit) opens the current local file in an editor. By default the desktop's handler is used; to choose one,
+set an argument array without a shell, where `{file}` is replaced inside a single argument (the path is appended if absent):
+
+```toml
+[editor]
+command = ["code", "--goto", "{file}"]
+```
+
+Only launch failures are reported (status bar); the editor's later exit status is not observed. Terminal editors need a
+terminal in the command, e.g. `["kitty", "nvim", "{file}"]`.

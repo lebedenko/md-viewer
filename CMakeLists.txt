@@ -38,7 +38,7 @@ qt_add_qml_module(mdv
   # Shared providers are loaded through the QML engine, not static plugin imports.
   NO_IMPORT_SCAN
   QML_FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml
-  SOURCES src/appconfig.h src/appconfig.cpp src/clipboard.h src/clipboard.cpp src/documentsession.h
+  SOURCES src/appconfig.h src/appconfig.cpp src/clipboard.h src/clipboard.cpp src/editorlauncher.h src/editorlauncher.cpp src/documentsession.h
     src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp
   IMPORT_PATH "${QMarkdown_QML_IMPORT_PATH}"
 )
@@ -62,7 +62,8 @@ if(BUILD_TESTING)
   find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
   find_package(GTest 1.12 CONFIG REQUIRED)
   add_executable(reader-tests tests/main.cpp tests/navigation_test.cpp tests/reader_test.cpp tests/documentsession_test.cpp tests/drop_test.cpp tests/application_test.cpp tests/appconfig_test.cpp
-    src/appconfig.h src/appconfig.cpp src/documentsession.h src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp src/clipboard.h src/clipboard.cpp)
+    src/appconfig.h src/appconfig.cpp src/documentsession.h src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp src/clipboard.h src/clipboard.cpp
+    src/editorlauncher.h src/editorlauncher.cpp tests/editorlauncher_test.cpp)
   qt_add_resources(reader-tests "application-qml" PREFIX "/qt/qml/MdViewer"
     FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml)
   qt_add_resources(reader-tests "copy-icon" PREFIX "/" FILES assets/copy.svg)

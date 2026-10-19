@@ -275,3 +275,35 @@ TEST(AppConfig, ReaderFeaturesValidateAndRoundTrip) {
   EXPECT_FALSE(config.lineNumbers());
   EXPECT_FALSE(config.heightLimiting());
 }
+
+TEST(AppConfig, ParsesEditorCommandAndFallsBackPerValue) {
+  const auto valid = AppConfig::parse("[editor]\ncommand = [\"code\", \"--goto\", \"{file}\"]\n");
+  ASSERT_TRUE(valid.has_value());
+  EXPECT_EQ(valid->editor_command, (QStringList{"code", "--goto", "{file}"}));
+  EXPECT_TRUE(valid->warnings.isEmpty());
+  for (const char* bad :
+       {"command = \"code {file}\"", "command = []", "command = [\"code\", 1]", "command = [\"\"]", "other = 1"}) {
+    const auto result = AppConfig::parse(QByteArray("[editor]\n") + bad + "\n");
+    ASSERT_TRUE(result.has_value()) << bad;
+    EXPECT_TRUE(result->editor_command.isEmpty()) << bad;
+    EXPECT_EQ(result->warnings.size(), 1) << bad;
+  }
+  EXPECT_EQ(AppConfig::parse("editor = 1\n")->warnings.size(), 1);
+}
+
+TEST(AppConfig, SavePreservesEditorTable) {
+  QTemporaryDir dir;
+  ASSERT_TRUE(dir.isValid());
+  const QString path = dir.filePath("config.toml");
+  writeFile(path, "[editor]\ncommand = [\"code\", \"{file}\"]\n");
+  {
+    AppConfig config({path});
+    EXPECT_EQ(config.editorCommand(), (QStringList{"code", "{file}"}));
+    config.setZoom(1.5);
+    ASSERT_TRUE(config.flush());
+  }
+  const auto saved = AppConfig::parse(readFile(path));
+  ASSERT_TRUE(saved.has_value());
+  EXPECT_EQ(saved->editor_command, (QStringList{"code", "{file}"}));
+  EXPECT_DOUBLE_EQ(saved->zoom, 1.5);
+}

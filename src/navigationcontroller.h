@@ -32,6 +32,7 @@ class NavigationController : public QObject {
   Q_INVOKABLE void missingFragment(const QString& fragment);
   void setLauncher(std::function<bool(const QUrl&)> launcher);
  signals:
+  void errorOccurred(const QString& message);
   void changed();
   void navigating();
   void restoreRequested(double fraction, const QString& fragment, bool reload, bool newDocument);

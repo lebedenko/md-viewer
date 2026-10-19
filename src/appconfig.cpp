@@ -132,6 +132,31 @@ void applyReader(const toml::table& reader, AppConfig::Values& values) {
   }
 }
 
+void applyEditor(const toml::table& editor, AppConfig::Values& values) {
+  for (const auto& [key, node] : editor) {
+    const std::string_view name = key.str();
+    if (name != "command") {
+      values.warnings.append(QStringLiteral("unknown key 'editor.%1'").arg(toQString(name)));
+      continue;
+    }
+    const auto* array = node.as_array();
+    QStringList command;
+    bool valid = array != nullptr && !array->empty();
+    for (std::size_t i = 0; valid && i < array->size(); ++i) {
+      const auto text = array->get(i)->value<std::string_view>();
+      valid = text && !text->empty();
+      if (valid) {
+        command.append(toQString(*text));
+      }
+    }
+    if (valid) {
+      values.editor_command = command;
+    } else {
+      values.warnings.append(QStringLiteral("editor.command must be a non-empty array of non-empty strings"));
+    }
+  }
+}
+
 }  // namespace
 
 QStringList AppConfig::candidatePaths(const QString& xdg_config_home, const QString& home) {
@@ -155,7 +180,11 @@ std::expected<AppConfig::Values, QString> AppConfig::parse(const QByteArray& byt
   }
   Values values;
   for (const auto& [key, node] : table) {
-    if (key.str() != "reader") {
+    if (key.str() == "editor") {
+      if (!node.is_table()) {
+        values.warnings.append(QStringLiteral("'editor' must be a table"));
+      }
+    } else if (key.str() != "reader") {
       values.warnings.append(
           QStringLiteral("unknown key '%1'").arg(QString::fromUtf8(key.data(), static_cast<qsizetype>(key.length()))));
     } else if (!node.is_table()) {
@@ -164,6 +193,9 @@ std::expected<AppConfig::Values, QString> AppConfig::parse(const QByteArray& byt
   }
   if (const auto* reader = table["reader"].as_table()) {
     applyReader(*reader, values);
+  }
+  if (const auto* editor = table["editor"].as_table()) {
+    applyEditor(*editor, values);
   }
   return values;
 }

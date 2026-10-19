@@ -38,6 +38,7 @@ void NavigationController::openPath(const QString& path) {
     open(QUrl::fromLocalFile(*resolved));
   } else {
     error_ = resolved.error();
+    emit errorOccurred(error_);
     emit navigating();
     session_.openPath(path);
     emit changed();
@@ -57,6 +58,9 @@ void NavigationController::activate(const QString& destination) {
   if ((url.scheme() == QLatin1String("http") || url.scheme() == QLatin1String("https")) && url.isValid() &&
       !url.host().isEmpty()) {
     error_ = launcher_(url) ? QString() : tr("Cannot launch browser: %1").arg(url.toString());
+    if (!error_.isEmpty()) {
+      emit errorOccurred(error_);
+    }
     emit changed();
     return;
   }
@@ -66,6 +70,7 @@ void NavigationController::activate(const QString& destination) {
     return;
   }
   error_ = tr("Unsupported destination: %1").arg(destination);
+  emit errorOccurred(error_);
   emit changed();
 }
 void NavigationController::visit(const QUrl& url, int target) {
@@ -129,6 +134,7 @@ void NavigationController::committed() {
 }
 void NavigationController::missingFragment(const QString& fragment) {
   error_ = tr("Heading not found: %1").arg(fragment);
+  emit errorOccurred(error_);
   emit changed();
 }
 void NavigationController::back() {

@@ -24,7 +24,8 @@ NavigationController owns DocumentSession, relative link resolution, desktop HTT
 Back/Forward history. ReaderPane uses public Find, heading, fragment and navigation rectangles; positions restore
 proportionally. Local images are authorized only under the successfully opened document directory; remote images
 remain denied. Selection, math, highlighting and code controls are preferences; see SDD 0014.
-Standard runtime Controls allow user-selected installed styles without a direct dependency on any specific style.
+`EditorLauncher` opens the current local file through the `[editor] command` argv array (or the desktop default) without a
+shell; see SDD 0017. Standard runtime Controls allow user-selected installed styles without a direct dependency on any specific style.
 
 The CMake project consumes installed shared QMarkdown. BUILD_TESTING adds GTest; Release needs no GTest.
 The renderer import directory comes from the selected package, not a source checkout.
