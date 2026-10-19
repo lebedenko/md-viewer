@@ -127,7 +127,7 @@ Controls.ApplicationWindow {
                 text: qsTr("Select text")
                 checked: config.selectionEnabled
                 onToggled: config.selectionEnabled = checked
-                Controls.ToolTip.text: qsTr("Selection displays math as TeX source")
+                Controls.ToolTip.text: qsTr("Selection keeps eligible formulas rendered and copies TeX")
                 Controls.ToolTip.visible: hovered
             }
             ColumnLayout {

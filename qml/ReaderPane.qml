@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
-import QMarkdown 1.13
+import QMarkdown 1.14
 
 Rectangle {
     id: root
@@ -139,7 +139,7 @@ Rectangle {
             Controls.ToolButton { text: qsTr("Next"); onClicked: root.nextResult(false) }
             Controls.ToolButton { text: qsTr("Close"); onClicked: root.closeFind() }
         }
-        Controls.Label { text: qsTr("Find and text selection display math as TeX source.") }
+        Controls.Label { text: qsTr("Active Find displays math as TeX source; selection copies TeX.") }
     }
     Controls.ScrollView {
         id: outline
@@ -186,6 +186,7 @@ Rectangle {
             if (!root.restoring) root.positionChanged(range > 0 ? Math.max(0, Math.min(1, contentY / range)) : 0)
         }
         WheelHandler {
+            blocking: false
             onWheel: event => { root.manualScroll(); event.accepted = false }
         }
         function scrollTo(value) { contentY = Math.max(0, Math.min(Math.max(0, contentHeight - height), value)) }
@@ -259,6 +260,7 @@ Rectangle {
             }
             onCopyRequested: function(text) { root.copyRequested(text) }
             onCodeBlockCopyRequested: function(text) { root.copyRequested(text) }
+            taskIndicatorsReplaceBullets: true
             taskIndicator: Component {
                 TaskIndicator {
                     hostPalette.window: root.paperColor

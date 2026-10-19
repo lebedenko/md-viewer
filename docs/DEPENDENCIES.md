@@ -9,7 +9,7 @@ Dependency ownership does not change this rule: qmarkdown is a third-party packa
 | Dependency | Scope | Consumption | Version policy |
 | --- | --- | --- | --- |
 | Qt | Production | find_package(Qt6 ...); Qt6::* | Minimum 6.8; initial CI SDK 6.8.3 |
-| qmarkdown | Production | find_package(QMarkdown 1.13 CONFIG REQUIRED); QMarkdown::QMarkdown | Compatible 1.x; reproducible preparation pins 1.13.0 commit + SHA-256 |
+| qmarkdown | Production | find_package(QMarkdown 1.14 CONFIG REQUIRED); QMarkdown::QMarkdown | Compatible 1.x; reproducible preparation pins 1.14.0 commit + SHA-256 |
 | GTest | Tests only | find_package(GTest 1.12 CONFIG REQUIRED); GTest::gtest | Distro/dev package; excluded with BUILD_TESTING=OFF |
 | tomlplusplus | Production (application configuration) | find_package(tomlplusplus 3 CONFIG REQUIRED); tomlplusplus::tomlplusplus | Header-only distro package (`tomlplusplus`, `libtomlplusplus-dev`); no pinned preparation |
 
@@ -31,7 +31,7 @@ KSyntaxHighlighting 6.10.0 into the dependency prefix before QMarkdown. Offline 
 `--archive`, `--ecm-archive` and `--syntax-archive` together with `--prepare-kde`.
 All three archive hashes are recorded in the lock. KDE preparation skips translation processing and examples;
 Qt Linguist tools are not needed. This KDE version is for the Qt 6.8 SDK; use installed compatible KDE with newer Qt. These operations are explicit; app builds remain offline.
-See [SDD 0013](sdd/0013-qmarkdown-1.13.md) for the compatibility review and verification.
+See [SDD 0016](sdd/0016-qmarkdown-1.14.md) for the compatibility review and verification.
 
 An offline archive can be supplied with `--archive`. Downloads do not occur if that verified archive is provided.
 Source/build directories include the revision; the local prefix is dedicated to this project. After a provider major-version,

@@ -171,6 +171,36 @@ TEST(ReaderFeatures, PublicSearchHeadingsSelectionAndBackendContract) {
   EXPECT_TRUE(payload.contains("int answer = 42;"));
 }
 
+TEST(ReaderFeatures, FormulaCopyAndFindPreserveSelectionEndpoints) {
+  ApplicationHarness harness;
+  ASSERT_NE(harness.root, nullptr) << harness.error.toStdString();
+  auto* pane = harness.root->findChild<QQuickItem*>(QStringLiteral("readerPane"));
+  auto* document = harness.root->findChild<QQuickItem*>(QStringLiteral("markdownDocument"));
+  ASSERT_NE(pane, nullptr);
+  ASSERT_NE(document, nullptr);
+  const QString tex = QStringLiteral("\\frac{a}{b} + c^2");
+  pane->setProperty("markdown", "Before formula.\n\n$$\n" + tex + "\n$$\n\nAfter formula.");
+  QCoreApplication::processEvents();
+  ASSERT_TRUE(document->property("mathAvailable").toBool());
+  ASSERT_TRUE(QMetaObject::invokeMethod(document, "selectAll"));
+  const QString payload = document->property("selectedText").toString();
+  EXPECT_EQ(payload, "Before formula.\n\n" + tex + "\n\nAfter formula.");
+  QGuiApplication::clipboard()->clear();
+  ASSERT_TRUE(QMetaObject::invokeMethod(document, "requestCopy"));
+  EXPECT_EQ(QGuiApplication::clipboard()->text(), payload);
+  ASSERT_TRUE(QMetaObject::invokeMethod(pane, "openFind"));
+  document->setProperty("searchQuery", tex);
+  EXPECT_EQ(document->property("searchResultCount").toInt(), 1);
+  const int start = document->property("selectionStart").toInt();
+  const int end = document->property("selectionEnd").toInt();
+  ASSERT_GT(end, start);
+  ASSERT_TRUE(QMetaObject::invokeMethod(pane, "closeFind"));
+  EXPECT_FALSE(document->property("searchActive").toBool());
+  EXPECT_EQ(document->property("selectionStart").toInt(), start);
+  EXPECT_EQ(document->property("selectionEnd").toInt(), end);
+  EXPECT_EQ(document->property("selectedText").toString(), payload);
+}
+
 TEST(ReaderFeatures, LocalImagesAreScopedAndRemoteResourcesStayDenied) {
   QTemporaryDir dir;
   ASSERT_TRUE(dir.isValid());
@@ -275,7 +305,7 @@ TEST(ReaderFeatures, DecorativeTaskArtworkTracksStateWithoutInputSemantics) {
   QQmlEngine engine;
   engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
   QQmlComponent styleComponent(&engine);
-  styleComponent.setData("import QMarkdown 1.13; MarkdownStyle {}", QUrl());
+  styleComponent.setData("import QMarkdown 1.14; MarkdownStyle {}", QUrl());
   std::unique_ptr<QObject> style(styleComponent.create());
   ASSERT_NE(style, nullptr) << styleComponent.errorString().toStdString();
   const QString directory = QFileInfo(QString::fromUtf8(MD_VIEWER_READER_QML)).absolutePath();
@@ -319,6 +349,7 @@ TEST(ReaderFeatures, PublicPresentationAdaptersAndCodePadding) {
   ASSERT_NE(harness.root, nullptr) << harness.error.toStdString();
   auto* document = harness.root->findChild<QQuickItem*>(QStringLiteral("markdownDocument"));
   ASSERT_NE(document, nullptr);
+  EXPECT_TRUE(document->property("taskIndicatorsReplaceBullets").toBool());
   EXPECT_NE(document->property("taskIndicator").value<QQmlComponent*>(), nullptr);
   auto* style = document->property("style").value<QObject*>();
   ASSERT_NE(style, nullptr);

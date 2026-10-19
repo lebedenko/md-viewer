@@ -51,7 +51,8 @@ Upstream requirements target reviewed QMarkdown 1.13.0 revision 9e07d41da7ecef45
   matching the prepared document. Provider source and dependency lock are unchanged.
 - Native checkbox appearance, compact header, tooltip, focus, copy, light/dark, zoom and fractional-scaling review
   was not performed and remains pending. Offscreen input tests do not establish native visual/input acceptance.
-- Task-row geometry and unordered marker replacement remain pending upstream.
+- Task-row geometry and unordered marker replacement were pending upstream at this verification;
+  subsequent adoption is tracked in [SDD 0016](0016-qmarkdown-1.14.md).
 
 Follow-up authorization: Owner corrected copy-button alignment to the right and explicitly requested focused tests
 only. The independent component test now checks right-edge alignment at two widths and with an empty language,

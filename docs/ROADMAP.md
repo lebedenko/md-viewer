@@ -8,10 +8,11 @@ Native open-dialog and file-manager drop checks in SDD 0003 remain pending.
 
 Complete; local, hosted-main and owner-confirmed native evidence is recorded in
 [0002](sdd/0002-foundation-baseline.md). Hosted and native checks for the 1.13 upgrade remain pending;
-see [0013](sdd/0013-qmarkdown-1.13.md).
+see [0013](sdd/0013-qmarkdown-1.13.md). The 1.14 adoption and its pending native/hosted review are tracked
+in [0016](sdd/0016-qmarkdown-1.14.md).
 
 - [x] Independent C++23 / Qt Quick / CMake / Ninja project.
-- [x] External QMarkdown 1.13 package and explicit pinned preparation.
+- [x] External QMarkdown 1.14 package and explicit pinned preparation.
 - [x] GTest integration and application startup checks.
 - [x] clang-format, clang-tidy, qmllint and local acceptance entry point.
 - [x] SDD template, architecture, mockup notes, GitHub workflow files.

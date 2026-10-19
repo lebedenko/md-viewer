@@ -1,13 +1,13 @@
 # Markdown Viewer
 
 A standalone Qt Quick application for reading and navigating local Markdown documentation.
-Built with C++23, Qt 6.8+, and the external QMarkdown 1.13 library. Linux is the initial supported platform.
+Built with C++23, Qt 6.8+, and the external QMarkdown 1.14 library. Linux is the initial supported platform.
 
 **Current state: local documentation reader.** Open local files from the command line, file dialog or drag and drop;
 select and copy rendered text or code, adjust keyboard zoom and column width, and edit preferences in Settings.
 Preferences persist in TOML after a 250 ms pause in changes and flush on shutdown.
 Live reload, session Back/Forward history, outline, Find, keyboard links and directory-scoped local images are available.
-Folder browsing remains planned. Selection and active Find show math as TeX source.
+Folder browsing remains planned. Selection keeps eligible formulas rendered and copies TeX; active Find displays TeX source.
 There is no HoloNight dependency, embedded editor, or Vim interaction layer.
 
 ## Start developing
@@ -44,7 +44,7 @@ Select a non-system Qt SDK using the `CMAKE_PREFIX_PATH` environment variable be
 Use compatible Qt/toolchains for qmarkdown and the application. Build directories are specific to a toolchain;
 use fresh directories when switching Qt or compiler versions.
 
-An installed shared QMarkdown 1.13 or compatible later 1.x package can replace `task deps`:
+An installed shared QMarkdown 1.14 or compatible later 1.x package can replace `task deps`:
 
 ```sh
 cmake --preset debug -DCMAKE_PREFIX_PATH=/path/to/provider/prefix
@@ -130,7 +130,7 @@ These commands change the running user-service environment; installation does no
 Ctrl+F opens Find; Enter/Shift+Enter and F3/Shift+F3 move between results. Escape closes Find and
 retains query/case. Ctrl+Shift+O toggles the outline. Alt+Left/Right navigate session history.
 Ctrl+A enables text selection and selects the document. Tab traverses document links when the reader has focus.
-Turn off **Select text** to view rendered math. Active Find also displays TeX source.
+Selection keeps eligible formulas rendered and copies their TeX. Active Find displays TeX source.
 
 The `[reader]` TOML booleans `selection_enabled`, `math_enabled`, `highlighting_enabled`, `line_numbers`, and
 `height_limiting` default to `true`; `code_wrapping` defaults to `false`. Settings exposes all six.

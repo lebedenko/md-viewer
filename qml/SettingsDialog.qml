@@ -146,7 +146,7 @@ Controls.Dialog {
             }
 
             Controls.CheckBox {
-                text: qsTr("Select text (math appears as TeX source)")
+                text: qsTr("Select text (eligible formulas stay rendered; copy uses TeX)")
                 checked: root.appConfig.selectionEnabled
                 onToggled: root.appConfig.selectionEnabled = checked
             }
