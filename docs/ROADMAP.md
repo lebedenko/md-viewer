@@ -57,6 +57,10 @@ No database or persistent content index initially. Folder browsing is not a proj
 
 ## 4 — Stabilization and delivery
 
+Text-rendering investigation and the hybrid candidate have moved to QMarkdown Feature 064;
+see [0018](sdd/0018-text-rendering-corruption.md) for the handoff and evidence locations.
+Upstream qualification remains pending; md-viewer's pinned dependency is unchanged.
+
 - [ ] Real-world large-document performance and reload benchmarks; use upstream improvements where appropriate.
 - [ ] Accessibility/focus review and native scaling/light/dark checks.
 - [ ] Adopt extension renderers only for justified document needs; no requirement to wait for all qmarkdown v2 features.
