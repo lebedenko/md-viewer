@@ -273,7 +273,18 @@ Rectangle {
                     hostPalette.highlightedText: root.paperColor
                 }
             }
-            codeBlockActions: Component { CodeHeader {} }
+            codeBlockActions: Component {
+                CodeHeader {
+                    palette.window: root.paperColor
+                    palette.base: root.paperColor
+                    palette.button: root.paperColor
+                    palette.windowText: root.textColor
+                    palette.text: root.textColor
+                    palette.buttonText: root.textColor
+                    palette.highlight: root.linkColor
+                    palette.highlightedText: root.paperColor
+                }
+            }
         }
     }
 }

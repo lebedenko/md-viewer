@@ -61,7 +61,9 @@ No database or persistent content index initially. Folder browsing is not a proj
 Text-rendering investigation and the hybrid candidate have moved to QMarkdown Feature 064;
 see [0018](sdd/0018-text-rendering-corruption.md) for the handoff and evidence locations.
 QMarkdown 1.17.1 now supplies the hybrid renderer; adoption and consumer verification are tracked in
-[0019](sdd/0019-qmarkdown-1.17.1.md). Native visual acceptance remains separate.
+[0019](sdd/0019-qmarkdown-1.17.1.md). Guided local native acceptance passed, including the code-header contrast fix, font-coverage retest
+and explicit owner text-integrity/scrolling verdict. Hosted CI remains pending; slower wheel scrolling
+is separate work.
 
 - [ ] Real-world large-document performance and reload benchmarks; use upstream improvements where appropriate.
 - [ ] Accessibility/focus review and native scaling/light/dark checks.

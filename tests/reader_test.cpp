@@ -245,6 +245,41 @@ TEST(ReaderFeatures, LocalImagesAreScopedAndRemoteResourcesStayDenied) {
   EXPECT_LT(document->height(), 100);
 }
 
+TEST(ReaderFeatures, CodeHeaderTracksReaderThemeOverride) {
+  QQmlEngine engine;
+  engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
+  QQmlComponent component(&engine, QUrl::fromLocalFile(QString::fromUtf8(MD_VIEWER_READER_QML)));
+  std::unique_ptr<QObject> pane(component.create());
+  ASSERT_NE(pane, nullptr) << component.errorString().toStdString();
+  auto* document = pane->findChild<QQuickItem*>(QStringLiteral("markdownDocument"));
+  ASSERT_NE(document, nullptr);
+  auto* actions = document->property("codeBlockActions").value<QQmlComponent*>();
+  ASSERT_NE(actions, nullptr);
+  std::unique_ptr<QObject> header(
+      actions->createWithInitialProperties({{"languageName", "C++"},
+                                            {"codeText", "int answer = 42;\n"},
+                                            {"requestCopy", QVariant::fromValue(engine.evaluate("(function() {})"))}},
+                                           actions->creationContext()));
+  ASSERT_NE(header, nullptr) << actions->errorString().toStdString();
+  auto* button = header->findChild<QQuickItem*>(QStringLiteral("codeCopyButton"));
+  auto* label = header->findChild<QQuickItem*>(QStringLiteral("codeLanguageLabel"));
+  ASSERT_NE(button, nullptr);
+  ASSERT_NE(label, nullptr);
+  // Exercise the public action component across reader theme changes.
+  for (bool dark : {false, true, false}) {
+    const QColor paper(dark ? "#1e1f22" : "#ffffff");
+    const QColor text(dark ? "#e3e5e8" : "#1f2328");
+    pane->setProperty("paperColor", paper);
+    pane->setProperty("textColor", text);
+    QCoreApplication::processEvents();
+    EXPECT_EQ(label->property("color").value<QColor>(), text);
+    QQmlExpression iconColor(qmlContext(button), button, QStringLiteral("icon.color"));
+    EXPECT_EQ(iconColor.evaluate().value<QColor>(), text);
+    QQmlExpression buttonColor(qmlContext(button), button, QStringLiteral("palette.button"));
+    EXPECT_EQ(buttonColor.evaluate().value<QColor>(), paper);
+  }
+}
+
 TEST(ReaderFeatures, ApplicationOwnedCodeComponentsHonorCallbacks) {
   QQmlEngine engine;
   const QString directory = QFileInfo(QString::fromUtf8(MD_VIEWER_READER_QML)).absolutePath();

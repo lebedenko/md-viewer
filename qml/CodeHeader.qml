@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 
-Item {
+Controls.Control {
     id: root
     required property string languageName
     required property string codeText
