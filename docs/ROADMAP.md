@@ -9,10 +9,11 @@ Native open-dialog and file-manager drop checks in SDD 0003 remain pending.
 Complete; local, hosted-main and owner-confirmed native evidence is recorded in
 [0002](sdd/0002-foundation-baseline.md). Hosted and native checks for the 1.13 upgrade remain pending;
 see [0013](sdd/0013-qmarkdown-1.13.md). The 1.14 adoption and its pending native/hosted review are tracked
-in [0016](sdd/0016-qmarkdown-1.14.md).
+in [0016](sdd/0016-qmarkdown-1.14.md). The 1.17.1 upgrade is tracked in
+[0019](sdd/0019-qmarkdown-1.17.1.md).
 
 - [x] Independent C++23 / Qt Quick / CMake / Ninja project.
-- [x] External QMarkdown 1.14 package and explicit pinned preparation.
+- [x] External QMarkdown 1.17.1 package and explicit pinned preparation.
 - [x] GTest integration and application startup checks.
 - [x] clang-format, clang-tidy, qmllint and local acceptance entry point.
 - [x] SDD template, architecture, mockup notes, GitHub workflow files.
@@ -59,7 +60,8 @@ No database or persistent content index initially. Folder browsing is not a proj
 
 Text-rendering investigation and the hybrid candidate have moved to QMarkdown Feature 064;
 see [0018](sdd/0018-text-rendering-corruption.md) for the handoff and evidence locations.
-Upstream qualification remains pending; md-viewer's pinned dependency is unchanged.
+QMarkdown 1.17.1 now supplies the hybrid renderer; adoption and consumer verification are tracked in
+[0019](sdd/0019-qmarkdown-1.17.1.md). Native visual acceptance remains separate.
 
 - [ ] Real-world large-document performance and reload benchmarks; use upstream improvements where appropriate.
 - [ ] Accessibility/focus review and native scaling/light/dark checks.

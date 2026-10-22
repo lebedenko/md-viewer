@@ -9,7 +9,7 @@ External editing is planned through a configured editor; embedded editing is out
 ## Implemented reader
 
 ```text
-src/main.cpp -> QML engine -> Main.qml -> ReaderPane.qml -> QMarkdown 1.14
+src/main.cpp -> QML engine -> Main.qml -> ReaderPane.qml -> QMarkdown 1.17.1
                                   |           |
                                   + Clipboard <- copy requests
 ```
@@ -61,13 +61,16 @@ Keep logical document position, selection state and viewport offset distinct.
 
 ## Renderer prerequisites
 
-QMarkdown 1.14 provides native rendering, optional GFM, selection/plain-text copy and code-copy actions, headings,
+QMarkdown 1.17.1 provides native rendering, optional GFM, selection/plain-text copy and code-copy actions, headings,
 fragment navigation, literal Find with rendered highlights, navigation rectangles and opt-in keyboard link traversal.
 Outline, navigation and Find are integrated through these public APIs (SDD 0014).
 Selection keeps eligible native formulas rendered and copies TeX; active Find exposes literal source and preserves
 selection endpoints on close. Unordered task indicators replace bullets through the public renderer option;
 ordered tasks retain numbers. The viewport wheel observer is nonblocking for nested code scrolling
 ([SDD 0016](sdd/0016-qmarkdown-1.14.md)).
+The 1.17.1 baseline adds upstream hybrid text rendering and the highlighting initialization fix
+([SDD 0019](sdd/0019-qmarkdown-1.17.1.md)); inline math, footnotes and custom highlighting providers remain opt-in
+and are not integrated into this reader.
 Do not implement regex Markdown parsing or inspect renderer delegates to bridge the gap.
 
 Use an application-local adapter only when needed to translate public qmarkdown APIs into application state.

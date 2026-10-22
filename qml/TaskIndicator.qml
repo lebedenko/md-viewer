@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
-import QMarkdown 1.14
+import QMarkdown 1.17
 
 Item {
     id: adapter

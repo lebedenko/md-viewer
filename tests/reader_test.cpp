@@ -305,7 +305,7 @@ TEST(ReaderFeatures, DecorativeTaskArtworkTracksStateWithoutInputSemantics) {
   QQmlEngine engine;
   engine.addImportPath(QString::fromUtf8(MD_VIEWER_QMARKDOWN_IMPORT_PATH));
   QQmlComponent styleComponent(&engine);
-  styleComponent.setData("import QMarkdown 1.14; MarkdownStyle {}", QUrl());
+  styleComponent.setData("import QMarkdown 1.17; MarkdownStyle {}", QUrl());
   std::unique_ptr<QObject> style(styleComponent.create());
   ASSERT_NE(style, nullptr) << styleComponent.errorString().toStdString();
   const QString directory = QFileInfo(QString::fromUtf8(MD_VIEWER_READER_QML)).absolutePath();
