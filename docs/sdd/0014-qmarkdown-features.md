@@ -13,7 +13,7 @@ local-image capabilities in the standalone reader.
 Selection defaults on; selection and active Find display math as TeX source. Persist six reader booleans:
 selection/math/highlighting/line numbers/height limiting default true; code wrapping defaults false.
 Code height is half the viewport clamped to 8–30 lines. Find retains query and case when closed.
-Outline starts hidden. Conventional shortcuts, selection edge scrolling and focused links remain public API clients.
+Outline initially started hidden; [SDD 0020](0020-reader-visual-design.md) changes it to enabled on the right. Conventional shortcuts, selection edge scrolling and focused links remain public API clients.
 History is session-only, positions proportional. Markdown links open internally, HTTP(S) through the desktop;
 unsupported destinations and missing headings report errors. Failed loads retain content/history.
 Authorize only the loaded document's directory for local images; remote images remain denied.

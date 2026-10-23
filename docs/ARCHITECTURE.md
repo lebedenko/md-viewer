@@ -19,7 +19,7 @@ ReaderPane. ReaderPane owns its viewport, rendering style, selection enablement 
 Main also provides a header/footer frame; ReaderPane selects qmarkdown's Polished preset from the system theme,
 keeps palette-bound color overrides and enables all GFM extensions.
 `AppConfig` reads and atomically writes TOML preferences (zoom, column width, theme, fonts, spacing, link underline,
-selection, math, highlighting and code controls); `SettingsDialog` edits them (SDD 0008). Clipboard owns the operating-system clipboard write. With no file argument the initial document is bundled text. `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003. It also watches the file and its directory and reloads saves after a debounce (SDD 0012).
+selection, math, highlighting and code controls); `SettingsDialog` edits them (SDD 0008). Clipboard owns the operating-system clipboard write. With no file argument an Open prompt is displayed (SDD 0020). `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003. It also watches the file and its directory and reloads saves after a debounce (SDD 0012).
 NavigationController owns DocumentSession, relative link resolution, desktop HTTP(S) launching and in-memory
 Back/Forward history. ReaderPane uses public Find, heading, fragment and navigation rectangles; positions restore
 proportionally. Local images are authorized only under the successfully opened document directory; remote images
@@ -93,3 +93,6 @@ Run clean-environment acceptance without HoloNight plugins/configuration and use
 Desktop installation uses relative GNUInstallDirs destinations for mdv, its desktop launcher and scalable icon.
 Qt sets desktopFileName to mdv and embeds the same SVG as its window icon. System and local Release installation
 are described in [SDD 0010](sdd/0010-desktop-installation.md); dependencies remain external.
+
+Header preferences layer the selected base and first existing desktop override with debounced header-only watches;
+reader settings are unaffected. The icon toolbar and right-hand outline are specified in [SDD 0020](sdd/0020-reader-visual-design.md).

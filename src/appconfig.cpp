@@ -180,7 +180,11 @@ std::expected<AppConfig::Values, QString> AppConfig::parse(const QByteArray& byt
   }
   Values values;
   for (const auto& [key, node] : table) {
-    if (key.str() == "editor") {
+    if (key.str() == "header") {
+      if (!node.is_table()) {
+        values.warnings.append(QStringLiteral("'header' must be a table"));
+      }
+    } else if (key.str() == "editor") {
       if (!node.is_table()) {
         values.warnings.append(QStringLiteral("'editor' must be a table"));
       }
@@ -211,6 +215,104 @@ AppConfig::AppConfig(const QStringList& candidates, QObject* parent) : QObject(p
     connect(app, &QCoreApplication::aboutToQuit, this, [this] { flush(); });
   }
   load(candidates);
+  const QFileInfo base(path_);
+  for (QString token : qEnvironmentVariable("XDG_CURRENT_DESKTOP").split(':', Qt::SkipEmptyParts)) {
+    bool valid = true;
+    for (QChar& character : token) {
+      const ushort code = character.unicode();
+      if (code >= 'A' && code <= 'Z') {
+        character = QChar(code + ('a' - 'A'));
+      } else if ((code < 'a' || code > 'z') && (code < '0' || code > '9') && code != '_' && code != '-') {
+        valid = false;
+      }
+    }
+    if (!valid) {
+      qWarning().noquote() << "Configuration: invalid desktop token" << token;
+      continue;
+    }
+    desktop_paths_.append(base.dir().filePath(base.completeBaseName() + '-' + token + ".toml"));
+  }
+  header_timer_.setSingleShot(true);
+  header_timer_.setInterval(100);
+  connect(&header_timer_, &QTimer::timeout, this, &AppConfig::reloadHeader);
+  connect(&header_watcher_, &QFileSystemWatcher::fileChanged, this, [this] { header_timer_.start(); });
+  connect(&header_watcher_, &QFileSystemWatcher::directoryChanged, this, [this] { header_timer_.start(); });
+  reloadHeader();
+}
+
+void AppConfig::watchHeader() {
+  if (!header_watcher_.files().isEmpty()) {
+    header_watcher_.removePaths(header_watcher_.files());
+  }
+  if (!header_watcher_.directories().isEmpty()) {
+    header_watcher_.removePaths(header_watcher_.directories());
+  }
+  QStringList paths = desktop_paths_;
+  paths.prepend(path_);
+  QStringList watches;
+  for (const auto& path : paths) {
+    if (QFileInfo::exists(path)) {
+      watches.append(path);
+    }
+    QDir directory = QFileInfo(path).dir();
+    while (true) {
+      if (directory.exists()) {
+        watches.append(directory.absolutePath());
+      }
+      if (!directory.cdUp()) {
+        break;
+      }
+    }
+  }
+  watches.removeDuplicates();
+  if (!watches.isEmpty()) {
+    header_watcher_.addPaths(watches);
+  }
+}
+
+void AppConfig::reloadHeader() {
+  bool title = true;
+  bool close = true;
+  const auto apply = [&title, &close](const QString& path) {
+    QFile file(path);
+    if (!file.exists()) {
+      return;
+    }
+    if (!file.open(QIODevice::ReadOnly)) {
+      qWarning().noquote() << "Configuration: cannot read" << path;
+      return;
+    }
+    const auto bytes = file.readAll();
+    if (file.error() != QFileDevice::NoError) {
+      return;
+    }
+    try {
+      const auto table = toml::parse(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())));
+      for (const auto& entry : {std::pair{"show_title", &title}, std::pair{"show_close_button", &close}}) {
+        const auto node = table["header"][entry.first];
+        if (node.is_boolean()) {
+          *entry.second = *node.value<bool>();
+        } else if (node) {
+          qWarning().noquote() << "Configuration" << path << "- header." << entry.first << "must be boolean";
+        }
+      }
+    } catch (const toml::parse_error&) {
+      qWarning().noquote() << "Configuration: malformed header file" << path;
+    }
+  };
+  apply(path_);
+  for (const auto& path : desktop_paths_) {
+    if (!isAbsent(path)) {
+      apply(path);
+      break;
+    }
+  }
+  if (title != show_title_ || close != show_close_button_) {
+    show_title_ = title;
+    show_close_button_ = close;
+    emit headerChanged();
+  }
+  watchHeader();
 }
 
 AppConfig::~AppConfig() { flush(); }

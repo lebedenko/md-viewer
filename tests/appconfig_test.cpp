@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QSaveFile>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -306,4 +307,87 @@ TEST(AppConfig, SavePreservesEditorTable) {
   ASSERT_TRUE(saved.has_value());
   EXPECT_EQ(saved->editor_command, (QStringList{"code", "{file}"}));
   EXPECT_DOUBLE_EQ(saved->zoom, 1.5);
+}
+
+TEST(AppConfigHeader, DesktopPriorityInheritanceAndHeaderOnlyReload) {
+  QTemporaryDir dir;
+  const QByteArray desktop = qgetenv("XDG_CURRENT_DESKTOP");
+  qputenv("XDG_CURRENT_DESKTOP", ":../invalid:HyPrLaNd:SECOND:");
+  const QString base = dir.filePath("config.toml");
+  const QString first = dir.filePath("config-hyprland.toml");
+  const QString second = dir.filePath("config-second.toml");
+  writeFile(base, "[header]\nshow_title = false\nshow_close_button = false\n[reader]\nzoom = 1.5\n");
+  writeFile(second, "[header]\nshow_title = true\nshow_close_button = true\n");
+  {
+    AppConfig config({base});
+    EXPECT_TRUE(config.showTitle());
+    EXPECT_TRUE(config.showCloseButton());
+    writeFile(first, "[header]\nshow_title = 'invalid'\n[reader]\nzoom = 3.0\n");
+    QTRY_VERIFY_WITH_TIMEOUT(!config.showTitle() && !config.showCloseButton(), 3000);
+    EXPECT_DOUBLE_EQ(config.zoom(), 1.5);
+    writeFile(first, "[header\n");
+    QTest::qWait(250);
+    EXPECT_FALSE(config.showTitle());
+    EXPECT_FALSE(config.showCloseButton());
+    writeFile(first, "[header]\nshow_title = true\n");
+    QTRY_VERIFY_WITH_TIMEOUT(config.showTitle(), 3000);
+    EXPECT_FALSE(config.showCloseButton());
+    config.setZoom(2.0);
+    ASSERT_TRUE(config.flush());
+    EXPECT_TRUE(readFile(base).contains("show_title = false"));
+    EXPECT_EQ(readFile(first), "[header]\nshow_title = true\n");
+    ASSERT_TRUE(QFile::remove(first));
+    QTRY_VERIFY_WITH_TIMEOUT(config.showCloseButton(), 3000);
+    ASSERT_TRUE(QFile::remove(second));
+    QTRY_VERIFY_WITH_TIMEOUT(!config.showTitle() && !config.showCloseButton(), 3000);
+  }
+  qputenv("XDG_CURRENT_DESKTOP", desktop);
+}
+
+TEST(AppConfigHeader, ReattachesAfterDirectoryReplacementAndCapturesDesktopAtLaunch) {
+  QTemporaryDir dir;
+  const QByteArray desktop = qgetenv("XDG_CURRENT_DESKTOP");
+  qputenv("XDG_CURRENT_DESKTOP", "FIRST");
+  const QString folder = dir.filePath("settings");
+  const QString base = folder + "/md-viewer.toml";
+  writeFile(base, "[header]\nshow_title = false\n");
+  {
+    AppConfig config({base});
+    EXPECT_FALSE(config.showTitle());
+    qputenv("XDG_CURRENT_DESKTOP", "SECOND");
+    ASSERT_TRUE(QDir().rename(folder, dir.filePath("old")));
+    writeFile(base, "[header]\nshow_title = true\n");
+    writeFile(folder + "/md-viewer-first.toml", "[header]\nshow_close_button = false\n");
+    QTRY_VERIFY_WITH_TIMEOUT(config.showTitle() && !config.showCloseButton(), 3000);
+    writeFile(folder + "/md-viewer-first.toml", "[header]\nshow_title = false\n");
+    QTRY_VERIFY_WITH_TIMEOUT(!config.showTitle() && config.showCloseButton(), 3000);
+  }
+  qputenv("XDG_CURRENT_DESKTOP", desktop);
+}
+
+TEST(AppConfigHeader, AtomicSaveAndUnreadableSelectedOverrideDoNotFallThrough) {
+  QTemporaryDir dir;
+  const QByteArray desktop = qgetenv("XDG_CURRENT_DESKTOP");
+  qputenv("XDG_CURRENT_DESKTOP", "one:two");
+  const QString base = dir.filePath("config.toml");
+  const QString first = dir.filePath("config-one.toml");
+  writeFile(base, "[header]\nshow_title = false\n");
+  writeFile(dir.filePath("config-two.toml"), "[header]\nshow_title = true\n");
+  ASSERT_TRUE(QDir().mkpath(first));
+  {
+    AppConfig config({base});
+    EXPECT_FALSE(config.showTitle());
+    ASSERT_TRUE(QDir().rmdir(first));
+    QSaveFile replacement(first);
+    ASSERT_TRUE(replacement.open(QIODevice::WriteOnly));
+    replacement.write("[header]\nshow_title = true\nshow_close_button = false\n");
+    ASSERT_TRUE(replacement.commit());
+    QTRY_VERIFY_WITH_TIMEOUT(config.showTitle() && !config.showCloseButton(), 3000);
+    QSaveFile next(first);
+    ASSERT_TRUE(next.open(QIODevice::WriteOnly));
+    next.write("[header]\nshow_title = false\n");
+    ASSERT_TRUE(next.commit());
+    QTRY_VERIFY_WITH_TIMEOUT(!config.showTitle() && config.showCloseButton(), 3000);
+  }
+  qputenv("XDG_CURRENT_DESKTOP", desktop);
 }

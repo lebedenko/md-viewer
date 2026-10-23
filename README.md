@@ -148,3 +148,27 @@ command = ["code", "--goto", "{file}"]
 
 Only launch failures are reported (status bar); the editor's later exit status is not observed. Terminal editors need a
 terminal in the command, e.g. `["kitty", "nvim", "{file}"]`.
+
+## Header configuration
+
+The selected base is `$XDG_CONFIG_HOME/md-viewer/config.toml` (absolute XDG only), falling back to
+`~/.config/md-viewer.toml`. With no existing candidate the first candidate is used for future saves.
+
+```toml
+[header]
+show_title = true
+show_close_button = true
+```
+
+Title controls both filename and toolbar path; native window title/decorations remain independent. Both values
+are read-only in Settings. A desktop override beside the base, such as `config-hyprland.toml` (or
+`md-viewer-hyprland.toml` for the legacy base), can override either header key. Colon-separated
+`XDG_CURRENT_DESKTOP` tokens are captured at launch, ASCII lowercased and tried in order. Empty tokens are skipped;
+names outside letters, digits, `_` and `-` warn and are skipped. Only the first existing override is selected,
+even if malformed or unreadable. Invalid/missing values inherit per key; malformed/unreadable files contribute nothing.
+Header edits, atomic saves, creation/deletion and directory replacement reload after a 100 ms debounce without
+changing reader preferences. Settings saves preserve `[header]` and never write desktop override files.
+
+The outline starts enabled, appears on the right when headings exist and retains its toggle for the current run.
+Arrow keys move between rows; Enter/Space activate. Its accent marks the last activated outline heading and clears
+when document content changes. Ctrl+Shift+O toggles it; Ctrl+F finds and Ctrl+E opens the external editor.

@@ -28,7 +28,9 @@ Rectangle {
     property bool heightLimiting: true
     property url baseUrl
     property var imageRoots: []
-    property bool outlineVisible: false
+    property bool outlineVisible: true
+    property int activatedHeading: -1
+    onMarkdownChanged: { activatedHeading = -1; outlineTarget = -1 }
     property bool findVisible: false
     readonly property bool mathAvailable: document.mathAvailable
     readonly property bool highlightingAvailable: document.syntaxHighlightingAvailable
@@ -60,6 +62,7 @@ Rectangle {
             const heading = newDocument ? -1 : outlineTarget
             outlineTarget = -1
             const found = heading >= 0 ? document.navigateToHeading(heading) : document.navigateToFragment("#" + fragment)
+            if (found && heading >= 0) activatedHeading = heading
             if (!found) {
                 if (newDocument) resetScroll()
                 missingFragment(fragment)
@@ -143,24 +146,73 @@ Rectangle {
     }
     Controls.ScrollView {
         id: outline
-        visible: root.outlineVisible
+        objectName: "outlineSidebar"
+        palette.window: root.paperColor
+        palette.base: root.paperColor
+        palette.text: root.textColor
+        palette.windowText: root.textColor
+        palette.button: root.paperColor
+        palette.buttonText: root.textColor
+        palette.highlight: root.linkColor
+        visible: root.outlineVisible && document.headings.length > 0
         anchors.top: searchRow.bottom
         anchors.bottom: parent.bottom
+        anchors.right: parent.right
         width: visible ? Math.min(240, root.width / 3) : 0
         clip: true
-        Column {
-            width: outline.availableWidth
-            Repeater {
-                model: document.headings
-                Controls.ItemDelegate {
-                    required property var modelData
-                    required property int index
-                    width: outline.availableWidth
-                    text: "  ".repeat(modelData.level - 1) + modelData.title
-                    onClicked: { root.outlineTarget = index; root.linkActivated("#" + modelData.fragmentId) }
+        Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
+        ListView {
+            id: outlineList
+            model: document.headings
+            boundsBehavior: Flickable.StopAtBounds
+            currentIndex: -1
+            topMargin: 16
+            bottomMargin: 16
+            delegate: Controls.ItemDelegate {
+                id: headingRow
+                required property var modelData
+                required property int index
+                width: outlineList.width
+                leftPadding: 20 + (modelData.level - 1) * 12
+                rightPadding: 12
+                palette.text: root.textColor
+                palette.highlight: root.linkColor
+                highlighted: activeFocus
+                contentItem: Text {
+                    text: headingRow.modelData.title
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                    color: root.textColor
+                    opacity: headingRow.modelData.level > 1 ? 0.7 : 1
+                    verticalAlignment: Text.AlignVCenter
+                    font: headingRow.font
                 }
+                background: Rectangle { color: headingRow.hovered || headingRow.activeFocus ? Qt.alpha(root.textColor, 0.07) : "transparent"; border.width: headingRow.visualFocus ? 1 : 0; border.color: root.linkColor }
+                Rectangle { x: 12; width: root.activatedHeading === headingRow.index ? 3 : 1; height: parent.height; color: root.activatedHeading === headingRow.index ? root.linkColor : root.separatorColor }
+                Controls.ToolTip.text: modelData.title
+                Controls.ToolTip.visible: hovered
+                Accessible.name: modelData.title
+                onClicked: { outlineList.currentIndex = index; root.outlineTarget = index; root.linkActivated("#" + modelData.fragmentId) }
+                Keys.onDownPressed: outlineList.focusRow(Math.min(outlineList.count - 1, index + 1))
+                Keys.onUpPressed: outlineList.focusRow(Math.max(0, index - 1))
+                Keys.onReturnPressed: clicked()
+                Keys.onEnterPressed: clicked()
+            }
+            function focusRow(index) {
+                currentIndex = index
+                positionViewAtIndex(index, ListView.Contain)
+                const row = itemAtIndex(index)
+                if (row) row.forceActiveFocus()
             }
         }
+    }
+    Rectangle {
+        anchors.left: outline.left
+        anchors.top: outline.top
+        anchors.bottom: outline.bottom
+        width: 1
+        visible: outline.visible
+        color: root.separatorColor
     }
     Shortcut { sequence: "PgDown"; enabled: document.activeFocus; onActivated: { root.manualScroll(); viewport.scrollTo(viewport.contentY + viewport.height * 0.9) } }
     Shortcut { sequence: "PgUp"; enabled: document.activeFocus; onActivated: { root.manualScroll(); viewport.scrollTo(viewport.contentY - viewport.height * 0.9) } }
@@ -174,8 +226,8 @@ Rectangle {
         objectName: "readerViewport"
         anchors.top: searchRow.bottom
         anchors.bottom: parent.bottom
-        anchors.left: outline.right
-        anchors.right: parent.right
+        anchors.left: parent.left
+        anchors.right: outline.left
         contentWidth: width
         contentHeight: document.height + 48
         clip: true

@@ -3,6 +3,9 @@
 Status: Complete
 Authorization: Owner request to add tomlplusplus and application configuration in the XDG config folder (accepted plan).
 
+Header configuration and live header-only watching are added by [SDD 0020](0020-reader-visual-design.md);
+the original reader-preference loading and save paths remain unchanged.
+
 ## Problem and outcome
 
 Preferences were in `QtCore.Settings`. The reader now has a user-editable TOML file that the upcoming settings window

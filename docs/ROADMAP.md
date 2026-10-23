@@ -48,6 +48,8 @@ and opt-in keyboard link traversal. Application integration and session history 
 verification limitations remain recorded there. No private API workaround is planned.
 Exit: follow a cross-document heading link, find text, copy it, return to the previous reading position, and reload safely.
 
+- [x] Minimal startup, icon toolbar, desktop header preferences and right-hand outline ([0020](sdd/0020-reader-visual-design.md)); native review pending.
+
 ## 3 — Folder browsing and continuity
 
 - [ ] Open a folder, lazy Markdown tree, filename picker and defined hidden/ignored/symlink behavior.

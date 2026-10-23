@@ -32,12 +32,13 @@ set_source_files_properties(qml/TaskIndicator.qml PROPERTIES QT_RESOURCE_ALIAS T
 set_source_files_properties(qml/CodeHeader.qml PROPERTIES QT_RESOURCE_ALIAS CodeHeader.qml)
 set_source_files_properties(qml/CodeScrollBar.qml PROPERTIES QT_RESOURCE_ALIAS CodeScrollBar.qml)
 set_source_files_properties(qml/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
+set_source_files_properties(qml/IconButton.qml PROPERTIES QT_RESOURCE_ALIAS IconButton.qml)
 qt_add_qml_module(mdv
   URI MdViewer
   VERSION 1.0
   # Shared providers are loaded through the QML engine, not static plugin imports.
   NO_IMPORT_SCAN
-  QML_FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml
+  QML_FILES qml/IconButton.qml qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml
   SOURCES src/appconfig.h src/appconfig.cpp src/clipboard.h src/clipboard.cpp src/editorlauncher.h src/editorlauncher.cpp src/documentsession.h
     src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp
   IMPORT_PATH "${QMarkdown_QML_IMPORT_PATH}"
@@ -49,7 +50,10 @@ target_include_directories(mdv PRIVATE src)
 # Distributors should use their final system prefix and deploy its QML module.
 target_compile_definitions(mdv PRIVATE MD_VIEWER_QMARKDOWN_IMPORT_PATH="${QMarkdown_QML_IMPORT_PATH}")
 target_compile_options(mdv PRIVATE $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>)
-qt_add_resources(mdv "application-icon" PREFIX "/" FILES assets/mdv.svg assets/copy.svg)
+set(reader_action_icons
+  assets/copy.svg assets/back.svg assets/forward.svg assets/open.svg assets/find.svg
+  assets/edit.svg assets/outline.svg assets/settings.svg assets/close.svg)
+qt_add_resources(mdv "application-icon" PREFIX "/" FILES assets/mdv.svg ${reader_action_icons})
 set_target_properties(mdv PROPERTIES INSTALL_RPATH "$<TARGET_FILE_DIR:QMarkdown::QMarkdown>")
 install(FILES assets/mdv.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 install(FILES assets/mdv.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
@@ -65,8 +69,8 @@ if(BUILD_TESTING)
     src/appconfig.h src/appconfig.cpp src/documentsession.h src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp src/clipboard.h src/clipboard.cpp
     src/editorlauncher.h src/editorlauncher.cpp tests/editorlauncher_test.cpp)
   qt_add_resources(reader-tests "application-qml" PREFIX "/qt/qml/MdViewer"
-    FILES qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml)
-  qt_add_resources(reader-tests "copy-icon" PREFIX "/" FILES assets/copy.svg)
+    FILES qml/IconButton.qml qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml)
+  qt_add_resources(reader-tests "action-icons" PREFIX "/" FILES ${reader_action_icons})
   target_link_libraries(reader-tests PRIVATE GTest::gtest Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent Qt6::Test QMarkdown::QMarkdown
     tomlplusplus::tomlplusplus)
   target_include_directories(reader-tests PRIVATE src)

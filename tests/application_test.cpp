@@ -182,10 +182,14 @@ TEST(ApplicationReaderFeatures, FindOutlineSettingsAndSelectionShortcuts) {
   ASSERT_NE(pane, nullptr);
   ASSERT_NE(document, nullptr);
   ASSERT_NE(config, nullptr);
+  auto* nav = harness.root->findChild<NavigationController*>();
+  ASSERT_NE(nav, nullptr);
+  nav->openPath(QString::fromUtf8(MD_VIEWER_TEST_DATA) + "/real-document.md");
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->state() == DocumentSession::State::Ready, 5000);
   QTest::qWait(30);
-  EXPECT_FALSE(pane->property("outlineVisible").toBool());
-  QTest::keyClick(window, Qt::Key_O, Qt::ControlModifier | Qt::ShiftModifier);
   EXPECT_TRUE(pane->property("outlineVisible").toBool());
+  QTest::keyClick(window, Qt::Key_O, Qt::ControlModifier | Qt::ShiftModifier);
+  EXPECT_FALSE(pane->property("outlineVisible").toBool());
   QTest::keyClick(window, Qt::Key_F, Qt::ControlModifier);
   EXPECT_TRUE(document->property("searchActive").toBool());
   QTest::keyClick(window, Qt::Key_M);
@@ -433,4 +437,165 @@ TEST(ApplicationEditor, LatestFailureWinsAndOnlyItsOriginCanClearIt) {
   EXPECT_TRUE(status().contains(nav->error()));
   nav->activate("#a");
   EXPECT_TRUE(status().isEmpty());
+}
+
+TEST(ApplicationVisualDesign, EmptyStartupActionsAndSuccessfulEmptyFile) {
+  ApplicationHarness harness;
+  ASSERT_NE(harness.root, nullptr) << harness.error.toStdString();
+  auto* nav = harness.root->findChild<NavigationController*>();
+  auto* window = qobject_cast<QQuickWindow*>(harness.root.get());
+  auto* prompt = harness.root->findChild<QQuickItem*>("openPrompt");
+  auto* document = harness.root->findChild<QQuickItem*>("markdownDocument");
+  ASSERT_NE(nav, nullptr);
+  ASSERT_NE(window, nullptr);
+  ASSERT_NE(prompt, nullptr);
+  ASSERT_NE(document, nullptr);
+  EXPECT_TRUE(prompt->isVisible());
+  EXPECT_TRUE(document->property("markdown").toString().isEmpty());
+  for (const auto* name : {"findButton", "editButton", "outlineButton", "backButton", "forwardButton"}) {
+    auto* button = harness.root->findChild<QQuickItem*>(name);
+    ASSERT_NE(button, nullptr);
+    EXPECT_FALSE(button->isEnabled());
+  }
+  window->setWidth(480);
+  QTest::qWait(30);
+  double previous_right = 0;
+  for (const auto* name : {"backButton", "forwardButton", "openButton", "findButton", "editButton", "outlineButton",
+                           "settingsButton", "closeButton"}) {
+    auto* button = harness.root->findChild<QQuickItem*>(name);
+    ASSERT_NE(button, nullptr);
+    const QPointF origin = button->mapToScene(QPointF());
+    EXPECT_GE(origin.x(), previous_right);
+    EXPECT_GE(button->width(), 36);
+    EXPECT_GE(button->height(), 36);
+    previous_right = origin.x() + button->width();
+    EXPECT_LE(previous_right, 480);
+    EXPECT_FALSE(button->property("label").toString().isEmpty());
+    EXPECT_TRUE(QFile::exists(":/assets/" + button->property("iconKey").toString() + ".svg"));
+  }
+  nav->openPath(harness.config_home.filePath("missing.md"));
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->state() == DocumentSession::State::Failed, 5000);
+  EXPECT_TRUE(prompt->isVisible());
+  QFile empty(harness.config_home.filePath("empty.md"));
+  ASSERT_TRUE(empty.open(QIODevice::WriteOnly));
+  empty.close();
+  nav->openPath(empty.fileName());
+  EXPECT_EQ(nav->session()->state(), DocumentSession::State::Loading);
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->state() == DocumentSession::State::Ready, 5000);
+  EXPECT_FALSE(prompt->isVisible());
+  EXPECT_TRUE(document->property("markdown").toString().isEmpty());
+  EXPECT_TRUE(harness.root->findChild<QQuickItem*>("findButton")->isEnabled());
+  nav->openPath(harness.config_home.filePath("missing.md"));
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->state() == DocumentSession::State::Failed, 5000);
+  EXPECT_FALSE(prompt->isVisible());
+  EXPECT_EQ(nav->session()->url().toLocalFile(), empty.fileName());
+}
+
+TEST(ApplicationVisualDesign, HeaderVisibilityAndCloseFocusTransfer) {
+  ApplicationHarness harness;
+  ASSERT_NE(harness.root, nullptr) << harness.error.toStdString();
+  auto* window = qobject_cast<QQuickWindow*>(harness.root.get());
+  auto* title = harness.root->findChild<QQuickItem*>("headerTitle");
+  auto* close = harness.root->findChild<QQuickItem*>("closeButton");
+  auto* settings = harness.root->findChild<QQuickItem*>("settingsButton");
+  auto* dialog = harness.root->findChild<QObject*>("settingsDialog");
+  auto* config = harness.root->findChild<AppConfig*>();
+  ASSERT_NE(window, nullptr);
+  ASSERT_NE(title, nullptr);
+  ASSERT_NE(close, nullptr);
+  ASSERT_NE(settings, nullptr);
+  ASSERT_NE(config, nullptr);
+  ASSERT_NE(dialog, nullptr);
+  ASSERT_TRUE(QDir().mkpath(QFileInfo(config->path()).absolutePath()));
+  window->requestActivate();
+  QTest::qWait(100);
+  const auto write = [&](bool show_title, bool show_close) {
+    QFile file(config->path());
+    EXPECT_TRUE(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    file.write(QByteArray("[header]\nshow_title = ") + (show_title ? "true" : "false") +
+               "\nshow_close_button = " + (show_close ? "true" : "false") + "\n");
+  };
+  for (const bool show_title : {false, true}) {
+    for (const bool show_close : {false, true}) {
+      write(show_title, show_close);
+      QTRY_VERIFY_WITH_TIMEOUT(title->isVisible() == show_title && close->isVisible() == show_close, 3000);
+    }
+  }
+  close->forceActiveFocus(Qt::TabFocusReason);
+  ASSERT_TRUE(close->hasActiveFocus());
+  write(true, false);
+  QTRY_VERIFY_WITH_TIMEOUT(!close->isVisible(), 3000);
+  EXPECT_TRUE(settings->hasActiveFocus());
+  write(true, true);
+  QTRY_VERIFY_WITH_TIMEOUT(close->isVisible(), 3000);
+  QTest::keyClick(window, Qt::Key_Comma, Qt::ControlModifier);
+  QTRY_VERIFY_WITH_TIMEOUT(dialog->property("visible").toBool(), 1000);
+  auto* focused = window->activeFocusItem();
+  write(false, false);
+  QTRY_VERIFY_WITH_TIMEOUT(!close->isVisible(), 3000);
+  EXPECT_EQ(window->activeFocusItem(), focused);
+  EXPECT_TRUE(dialog->property("visible").toBool());
+}
+
+TEST(ApplicationVisualDesign, RightOutlineKeyboardMarkerAndToggleRetention) {
+  ApplicationHarness harness;
+  ASSERT_NE(harness.root, nullptr) << harness.error.toStdString();
+  auto* nav = harness.root->findChild<NavigationController*>();
+  auto* pane = harness.root->findChild<QQuickItem*>("readerPane");
+  auto* sidebar = harness.root->findChild<QQuickItem*>("outlineSidebar");
+  auto* viewport = harness.root->findChild<QQuickItem*>("readerViewport");
+  auto* window = qobject_cast<QQuickWindow*>(harness.root.get());
+  ASSERT_NE(nav, nullptr);
+  ASSERT_NE(pane, nullptr);
+  ASSERT_NE(sidebar, nullptr);
+  ASSERT_NE(viewport, nullptr);
+  ASSERT_NE(window, nullptr);
+  QFile file(harness.config_home.filePath("outline.md"));
+  const auto open = [&](const QByteArray& content) {
+    EXPECT_TRUE(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+    file.write(content);
+    file.close();
+    nav->openPath(file.fileName());
+  };
+  open("# First\n\n## Second with a very long title that should elide within the sidebar\n\n### Third\n");
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->state() == DocumentSession::State::Ready, 5000);
+  QTest::qWait(100);
+  EXPECT_TRUE(sidebar->isVisible());
+  EXPECT_DOUBLE_EQ(sidebar->x(), viewport->x() + viewport->width());
+  EXPECT_DOUBLE_EQ(sidebar->width(), 240);
+  window->setWidth(480);
+  QTest::qWait(30);
+  EXPECT_DOUBLE_EQ(sidebar->width(), 160);
+  QList<QQuickItem*> rows;
+  const auto collect = [&rows](auto&& self, QQuickItem* parent) -> void {
+    for (auto* item : parent->childItems()) {
+      if (item->property("modelData").isValid()) {
+        rows.append(item);
+      }
+      self(self, item);
+    }
+  };
+  collect(collect, sidebar);
+  ASSERT_EQ(rows.size(), 3);
+  EXPECT_LT(rows[0]->property("leftPadding").toDouble(), rows[1]->property("leftPadding").toDouble());
+  window->requestActivate();
+  QTest::qWait(100);
+  rows[0]->forceActiveFocus(Qt::TabFocusReason);
+  QTest::keyClick(window, Qt::Key_Down);
+  EXPECT_TRUE(rows[1]->hasActiveFocus());
+  QTest::keyClick(window, Qt::Key_Return);
+  QTRY_COMPARE_WITH_TIMEOUT(pane->property("activatedHeading").toInt(), 1, 1000);
+  rows[2]->forceActiveFocus();
+  QTest::keyClick(window, Qt::Key_Space);
+  QTRY_COMPARE_WITH_TIMEOUT(pane->property("activatedHeading").toInt(), 2, 1000);
+  pane->setProperty("outlineVisible", false);
+  open("No headings\n");
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->markdown() == "No headings\n", 5000);
+  EXPECT_EQ(pane->property("activatedHeading").toInt(), -1);
+  EXPECT_FALSE(sidebar->isVisible());
+  open("# Back\n");
+  QTRY_VERIFY_WITH_TIMEOUT(nav->session()->markdown() == "# Back\n", 5000);
+  EXPECT_FALSE(sidebar->isVisible());
+  QTest::keyClick(window, Qt::Key_O, Qt::ControlModifier | Qt::ShiftModifier);
+  EXPECT_TRUE(sidebar->isVisible());
 }

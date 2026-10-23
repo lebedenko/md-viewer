@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QFileSystemWatcher>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -9,11 +10,13 @@
 
 #include <expected>
 
-// TOML application configuration. The file is read once at construction; changes are persisted after a short debounce.
+// TOML reader preferences persist after a short debounce; desktop header preferences also reload live.
 class AppConfig : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY_MOVE(AppConfig)
   QML_ELEMENT
+  Q_PROPERTY(bool showTitle READ showTitle NOTIFY headerChanged)
+  Q_PROPERTY(bool showCloseButton READ showCloseButton NOTIFY headerChanged)
   Q_PROPERTY(double zoom READ zoom WRITE setZoom NOTIFY zoomChanged)
   Q_PROPERTY(int widthPreset READ widthPreset WRITE setWidthPreset NOTIFY widthPresetChanged)
   Q_PROPERTY(int theme READ theme WRITE setTheme NOTIFY themeChanged)
@@ -78,6 +81,8 @@ class AppConfig : public QObject {
   ~AppConfig() override;
   bool flush();
 
+  [[nodiscard]] bool showTitle() const { return show_title_; }
+  [[nodiscard]] bool showCloseButton() const { return show_close_button_; }
   [[nodiscard]] double zoom() const { return values_.zoom; }
   [[nodiscard]] int widthPreset() const { return values_.width_preset; }
   [[nodiscard]] int theme() const { return values_.theme; }
@@ -109,6 +114,7 @@ class AppConfig : public QObject {
   void setLinkUnderline(bool underline);
 
  signals:
+  void headerChanged();
   void zoomChanged();
   void widthPresetChanged();
   void themeChanged();
@@ -125,11 +131,18 @@ class AppConfig : public QObject {
   void errorChanged();
 
  private:
+  void reloadHeader();
+  void watchHeader();
   void load(const QStringList& candidates);
   bool save();
   void scheduleSave();
   void setError(const QString& error);
 
+  QFileSystemWatcher header_watcher_;
+  QTimer header_timer_;
+  QStringList desktop_paths_;
+  bool show_title_ = true;
+  bool show_close_button_ = true;
   QTimer save_timer_;
   bool pending_ = false;
   Values values_;

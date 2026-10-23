@@ -8,7 +8,7 @@ Controls.ApplicationWindow {
     id: window
     property string initialPath
     readonly property string documentTitle: session.title || qsTr("Markdown Viewer")
-    readonly property string documentSource: session.revision === 0 ? qsTr("Bundled sample") : session.displayPath
+    readonly property string documentSource: session.displayPath
     property string displayedFailure: ""
     property var failureOrigin: null
     readonly property string statusMessage: displayedFailure ? "\u26A0 " + displayedFailure
@@ -25,8 +25,8 @@ Controls.ApplicationWindow {
             failureOrigin = null
         }
     }
-    readonly property string sampleMarkdown: "# Markdown Viewer\n\nA comfortable place to read local Markdown documents.\n\n## Reading\n\nSelect text to copy it, or try the copy action on this code block.\n\n```sh\necho 'Hello, Markdown'\n```\n\n## GitHub Flavored Markdown\n\n| Feature | Status |\n| :--- | ---: |\n| Tables | ready |\n| Task lists | ready |\n\n- [x] Strikethrough: ~~old~~ new\n- [x] Open files\n\nAutolink: https://www.qt.io\n\nOpen a file with Ctrl+O, drop one onto this window, or pass a path on the command line."
 
+    minimumWidth: 480
     width: 960
     height: 720
     visible: true
@@ -106,11 +106,11 @@ Controls.ApplicationWindow {
     }
 
     Shortcut { sequence: "Ctrl+E"; enabled: window.canEdit; onActivated: editor.openInEditor(window.session.url) }
-    Shortcut { sequence: "Ctrl+F"; onActivated: reader.openFind() }
-    Shortcut { sequence: "Ctrl+Shift+O"; onActivated: reader.outlineVisible = !reader.outlineVisible }
+    Shortcut { sequence: "Ctrl+F"; enabled: window.canEdit; onActivated: reader.openFind() }
+    Shortcut { sequence: "Ctrl+Shift+O"; enabled: window.canEdit; onActivated: reader.outlineVisible = !reader.outlineVisible }
     Shortcut { sequence: "Alt+Left"; onActivated: navigation.back() }
     Shortcut { sequence: "Alt+Right"; onActivated: navigation.forward() }
-    Shortcut { sequence: "Ctrl+A"; onActivated: { config.selectionEnabled = true; reader.selectAll() } }
+    Shortcut { sequence: "Ctrl+A"; enabled: window.canEdit; onActivated: { config.selectionEnabled = true; reader.selectAll() } }
     SettingsDialog {
         id: settingsDialog
         objectName: "settingsDialog"
@@ -134,55 +134,99 @@ Controls.ApplicationWindow {
             anchors.fill: parent
             anchors.leftMargin: 16
             anchors.rightMargin: 8
-            spacing: 8
+            spacing: 2
 
-            Controls.ToolButton { text: qsTr("Back"); enabled: navigation.canGoBack; onClicked: navigation.back() }
-            Controls.ToolButton { text: qsTr("Forward"); enabled: navigation.canGoForward; onClicked: navigation.forward() }
-            Controls.ToolButton { text: qsTr("Outline"); checkable: true; checked: reader.outlineVisible; onClicked: reader.outlineVisible = checked }
-            Controls.ToolButton { text: qsTr("Find"); onClicked: reader.openFind() }
-            Controls.ToolButton {
-                objectName: "editButton"
-                text: qsTr("Edit")
-                enabled: window.canEdit
-                Controls.ToolTip.text: qsTr("Open in editor (Ctrl+E)")
-                Controls.ToolTip.visible: hovered
-                onClicked: editor.openInEditor(window.session.url)
+            IconButton {
+                objectName: "backButton"
+                label: qsTr("Back (Alt+Left)")
+                iconKey: "back"
+                themeName: "go-previous"
+                enabled: navigation.canGoBack
+                onClicked: navigation.back()
             }
-            Controls.CheckBox {
-                text: qsTr("Select text")
-                checked: config.selectionEnabled
-                onToggled: config.selectionEnabled = checked
-                Controls.ToolTip.text: qsTr("Selection keeps eligible formulas rendered and copies TeX")
-                Controls.ToolTip.visible: hovered
+            IconButton {
+                objectName: "forwardButton"
+                label: qsTr("Forward (Alt+Right)")
+                iconKey: "forward"
+                themeName: "go-next"
+                enabled: navigation.canGoForward
+                onClicked: navigation.forward()
+            }
+            IconButton {
+                objectName: "openButton"
+                label: qsTr("Open (Ctrl+O)")
+                iconKey: "open"
+                themeName: "document-open"
+                onClicked: openDialog.open()
             }
             ColumnLayout {
+                objectName: "headerTitle"
+                visible: config.showTitle
                 Layout.fillWidth: true
+                Layout.minimumWidth: 0
                 spacing: 0
-
                 Controls.Label {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: window.documentTitle
+                    textFormat: Text.PlainText
                     font.bold: true
                     elide: Text.ElideRight
                 }
                 Controls.Label {
                     Layout.fillWidth: true
+                    Layout.minimumWidth: 0
                     text: window.documentSource
+                    textFormat: Text.PlainText
                     opacity: 0.7
                     font.pointSize: window.font.pointSize * 0.85
                     elide: Text.ElideMiddle
                 }
             }
-            Controls.ToolButton {
-                text: qsTr("Open…")
-                onClicked: openDialog.open()
+            Item { visible: !config.showTitle; Layout.fillWidth: true }
+            IconButton {
+                objectName: "findButton"
+                label: qsTr("Find (Ctrl+F)")
+                iconKey: "find"
+                themeName: "edit-find"
+                enabled: window.canEdit
+                onClicked: reader.openFind()
             }
-            Controls.ToolButton {
+            IconButton {
+                objectName: "editButton"
+                label: qsTr("Open in editor (Ctrl+E)")
+                iconKey: "edit"
+                themeName: "document-edit"
+                enabled: window.canEdit
+                onClicked: editor.openInEditor(window.session.url)
+            }
+            IconButton {
+                objectName: "outlineButton"
+                label: qsTr("Outline (Ctrl+Shift+O)")
+                iconKey: "outline"
+                themeName: "view-list-tree"
+                enabled: window.canEdit
+                checkable: true
+                checked: reader.outlineVisible
+                onClicked: reader.outlineVisible = checked
+            }
+            IconButton {
+                id: settingsButton
                 objectName: "settingsButton"
-                text: qsTr("Settings")
-                Controls.ToolTip.text: qsTr("Settings (Ctrl+,)")
-                Controls.ToolTip.visible: hovered
+                label: qsTr("Settings (Ctrl+,)")
+                iconKey: "settings"
+                themeName: "configure"
                 onClicked: settingsDialog.open()
+            }
+            IconButton {
+                id: closeButton
+                objectName: "closeButton"
+                label: qsTr("Close (Alt+F4)")
+                iconKey: "close"
+                themeName: "window-close"
+                visible: config.showCloseButton
+                onVisibleChanged: if (!visible && activeFocus && !settingsDialog.visible && !openDialog.visible) settingsButton.forceActiveFocus()
+                onClicked: window.close()
             }
         }
     }
@@ -195,6 +239,7 @@ Controls.ApplicationWindow {
 
             Controls.Label {
                 Layout.fillWidth: true
+                textFormat: Text.PlainText
                 text: window.statusMessage || window.documentSource
                 opacity: window.statusMessage ? 1 : 0.7
                 font.bold: window.statusMessage !== ""
@@ -222,7 +267,7 @@ Controls.ApplicationWindow {
         blockSpacingScale: config.blockSpacing
         linkUnderline: config.linkUnderline
         maxColumnWidth: window.widthPresets[window.widthPresetIndex].width
-        markdown: window.session.revision === 0 ? window.sampleMarkdown : window.session.markdown
+        markdown: window.session.markdown
         selectionEnabled: config.selectionEnabled
         mathEnabled: config.mathEnabled
         highlightingEnabled: config.highlightingEnabled
@@ -237,8 +282,19 @@ Controls.ApplicationWindow {
         onCopyRequested: function(text) { Clipboard.copyText(text) }
     }
 
+    ColumnLayout {
+        objectName: "openPrompt"
+        anchors.centerIn: parent
+        visible: window.session.revision === 0
+        Controls.BusyIndicator { Layout.alignment: Qt.AlignHCenter; running: window.session.state === DocumentSession.Loading; visible: running }
+        Controls.Label { Layout.alignment: Qt.AlignHCenter; text: window.session.state === DocumentSession.Loading ? qsTr("Loading…") : qsTr("Open a Markdown file") }
+        Controls.Button { Layout.alignment: Qt.AlignHCenter; text: qsTr("Open…"); onClicked: openDialog.open() }
+        Controls.Label { text: qsTr("Ctrl+O or drop a file onto this window"); opacity: 0.7 }
+    }
+
     Connections {
         target: window.session
+        function onDocumentChanged() { reader.activatedHeading = -1; reader.outlineTarget = -1 }
         function onStateChanged() {
             if (window.session.state === DocumentSession.Failed)
                 window.reportFailure(window.session, window.session.error)
