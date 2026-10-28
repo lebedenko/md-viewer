@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
-import QMarkdown 1.17
+import QMarkdown 1.18
 
 Rectangle {
     id: root

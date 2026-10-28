@@ -10,10 +10,11 @@ Complete; local, hosted-main and owner-confirmed native evidence is recorded in
 [0002](sdd/0002-foundation-baseline.md). Hosted and native checks for the 1.13 upgrade remain pending;
 see [0013](sdd/0013-qmarkdown-1.13.md). The 1.14 adoption and its pending native/hosted review are tracked
 in [0016](sdd/0016-qmarkdown-1.14.md). The 1.17.1 upgrade is tracked in
-[0019](sdd/0019-qmarkdown-1.17.1.md).
+[0019](sdd/0019-qmarkdown-1.17.1.md). The 1.18.0 baseline adoption is tracked in
+[0021](sdd/0021-qmarkdown-1.18.0.md).
 
 - [x] Independent C++23 / Qt Quick / CMake / Ninja project.
-- [x] External QMarkdown 1.17.1 package and explicit pinned preparation.
+- [x] External QMarkdown 1.18.0 package and explicit pinned preparation.
 - [x] GTest integration and application startup checks.
 - [x] clang-format, clang-tidy, qmllint and local acceptance entry point.
 - [x] SDD template, architecture, mockup notes, GitHub workflow files.
