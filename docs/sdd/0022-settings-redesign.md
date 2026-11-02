@@ -142,3 +142,28 @@ Native style review remains pending.
 ## Open decisions
 
 None within the accepted scope.
+
+## Visible table border modes — 2026-11-03
+
+Authorization: Owner requested implementation of the accepted table-border visibility plan.
+The public border-mode binding worked, but QMarkdown's zero default border width made the modes
+visually indistinguishable. ReaderPane now supplies a default width of 1 logical pixel across all
+presets, before applying explicit overrides. Explicit zero and positive widths remain valid; reset
+removes the override and restores 1. Existing color and mode mappings are unchanged. This uses only
+public style properties, with no configuration migration or public API change.
+
+Acceptance and implementation:
+
+- [x] Resolve the application default width to 1 for Automatic and all five explicit presets.
+- [x] Preserve explicit zero and positive widths, persistence and reset.
+- [x] Exercise None, Grid, Rows and Header only through the Settings control and check public values.
+- [x] Check captured multirow, multicolumn table images for absent borders, grid verticals,
+  row separators and the header separator, without inspecting renderer children.
+- [ ] Native visual/input verification (separate from offscreen image checks).
+
+Verification: the focused border regression passed using offscreen/software rendering with Fusion.
+It also checks zero-width images and the restored default grid image after reset.
+Full `task check` passed: formatting, Debug build, 83/83 CTest cases, clean QML lint,
+clang-tidy, Release build, desktop validation, isolated installation layouts and installed
+startup/help/version checks. Log: `/tmp/mdv-border-check-final.log`. `git diff --check` passed.
+Native visual/input review remains pending; no hosted checks were run.

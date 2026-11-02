@@ -29,6 +29,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <vector>
 
 namespace {
 // Repeater delegates belong to the application's visual hierarchy, not necessarily its QObject hierarchy.
@@ -51,6 +52,33 @@ QQuickItem* settingsItem(QObject* dialog, const QString& name) {
     return found;
   }
   return settingsItem(dialog->property("header").value<QQuickItem*>(), name);
+}
+std::pair<int, int> tableBorderPattern(const QImage& image) {
+  EXPECT_FALSE(image.isNull());
+  int horizontal = 0;
+  int vertical = 0;
+  const auto red = [&](int column, int row) {
+    const QColor color = image.pixelColor(column, row);
+    return color.red() > 150 && color.green() < 100 && color.blue() < 100;
+  };
+  for (int row = 0; row < image.height(); ++row) {
+    int count = 0;
+    for (int column = 0; column < image.width(); ++column) {
+      count += red(column, row) ? 1 : 0;
+    }
+    horizontal += count > 100 ? 1 : 0;
+  }
+  for (int column = 0; column < image.width(); ++column) {
+    int run = 0;
+    for (int row = 0; row < image.height(); ++row) {
+      run = red(column, row) ? run + 1 : 0;
+      if (run > 20) {
+        ++vertical;
+        break;
+      }
+    }
+  }
+  return {horizontal, vertical};
 }
 }  // namespace
 
@@ -730,6 +758,74 @@ TEST(ApplicationSettings, PublicOptionsSharedOverridesAndResolvedFontZoom) {
   QFile file(config->path());
   ASSERT_TRUE(file.open(QIODevice::ReadOnly));
   EXPECT_FALSE(file.readAll().contains("selection_enabled"));
+}
+
+TEST(ApplicationSettings, TableBordersHaveVisibleDefaultsAndPreserveOverrides) {
+  ApplicationHarness harness;
+  ASSERT_NE(harness.root, nullptr) << harness.error.toStdString();
+  auto* config = harness.root->findChild<AppConfig*>();
+  auto* document = harness.root->findChild<QObject*>("markdownDocument");
+  auto* pane = harness.root->findChild<QQuickItem*>("readerPane");
+  auto* dialog = harness.root->findChild<QObject*>("settingsDialog");
+  auto* window = qobject_cast<QQuickWindow*>(harness.root.get());
+  ASSERT_NE(config, nullptr);
+  ASSERT_NE(document, nullptr);
+  ASSERT_NE(pane, nullptr);
+  ASSERT_NE(dialog, nullptr);
+  ASSERT_NE(window, nullptr);
+  auto* style = document->property("style").value<QObject*>();
+  ASSERT_NE(style, nullptr);
+  auto* table = style->property("table").value<QObject*>();
+  ASSERT_NE(table, nullptr);
+  for (int preset = 0; preset <= 5; ++preset) {
+    config->setReaderSetting("options.stylePreset", preset);
+    EXPECT_DOUBLE_EQ(table->property("borderWidth").toDouble(), 1);
+    for (const double width : {0.0, 2.5}) {
+      config->setReaderSetting("style.table.borderWidth", width);
+      EXPECT_DOUBLE_EQ(table->property("borderWidth").toDouble(), width);
+      ASSERT_TRUE(config->flush());
+      AppConfig reloaded;
+      EXPECT_DOUBLE_EQ(reloaded.readerSettings().value("style.table.borderWidth").toDouble(), width);
+      config->resetReaderSetting("style.table.borderWidth");
+      EXPECT_DOUBLE_EQ(table->property("borderWidth").toDouble(), 1);
+    }
+  }
+  config->resetReaderSetting("options.stylePreset");
+  config->setReaderSetting("style.table.borderColor", "#ffff0000");
+  pane->setProperty("markdown",
+                    "| Alpha | Beta | Gamma |\n| --- | --- | --- |\n| One | Two | Three |\n| Four | Five | Six |\n");
+  // Count colored horizontal scanlines and vertical runs in window pixels. No renderer geometry is read.
+  const auto pattern = [&] {
+    QTest::qWait(80);
+    return tableBorderPattern(window->grabWindow());
+  };
+  std::vector<std::pair<int, int>> patterns;
+  for (int mode = 0; mode < 4; ++mode) {
+    QTest::keyClick(window, Qt::Key_Comma, Qt::ControlModifier);
+    ASSERT_TRUE(dialog->setProperty("currentTab", 5));
+    QTest::qWait(30);
+    auto* control = settingsItem(dialog, "control.style.table.borderMode");
+    ASSERT_NE(control, nullptr);
+    ASSERT_TRUE(QMetaObject::invokeMethod(control, "activated", Q_ARG(int, mode)));
+    EXPECT_EQ(table->property("borderMode").toInt(), mode);
+    QTest::keyClick(window, Qt::Key_Escape);
+    patterns.push_back(pattern());
+  }
+  EXPECT_EQ(patterns[0], std::make_pair(0, 0));
+  EXPECT_GT(patterns[1].first, patterns[3].first);
+  EXPECT_GT(patterns[1].second, 0);
+  EXPECT_GT(patterns[2].first, patterns[3].first);
+  EXPECT_EQ(patterns[2].second, 0);
+  EXPECT_GT(patterns[3].first, 0);
+  EXPECT_EQ(patterns[3].second, 0);
+  config->setReaderSetting("style.table.borderMode", 1);
+  config->setReaderSetting("style.table.borderWidth", 0);
+  EXPECT_EQ(pattern(), std::make_pair(0, 0));
+  config->resetReaderSetting("style.table.borderWidth");
+  EXPECT_EQ(pattern(), patterns[1]);
+  ASSERT_TRUE(config->flush());
+  AppConfig reloaded;
+  EXPECT_FALSE(reloaded.readerSettings().contains("style.table.borderWidth"));
 }
 
 TEST(ApplicationSettings, EveryCanonicalStyleFieldBindsOnceToThePublicRenderer) {

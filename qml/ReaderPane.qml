@@ -44,6 +44,8 @@ Rectangle {
         return undefined;
     }
     function styleDefault(path) {
+        if (path === "table.borderWidth")
+            return 1;
         const base = publicValue(presetStyle, path);
         if (path.endsWith("font") || path === "bodyFont") {
             const family = path.startsWith("codeBlock") || path.startsWith("inlineCode") ? codeFamily : bodyFamily;
