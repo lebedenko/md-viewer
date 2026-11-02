@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFont>
 #include <QSaveFile>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -246,7 +247,6 @@ TEST(AppConfig, UnreadableFileAfterLoadingIsPreserved) {
 TEST(AppConfig, ReaderFeaturesValidateAndRoundTrip) {
   const auto defaults = AppConfig::parse({});
   ASSERT_TRUE(defaults);
-  EXPECT_TRUE(defaults->selection_enabled);
   EXPECT_TRUE(defaults->math_enabled);
   EXPECT_TRUE(defaults->highlighting_enabled);
   EXPECT_FALSE(defaults->code_wrapping);
@@ -260,7 +260,6 @@ TEST(AppConfig, ReaderFeaturesValidateAndRoundTrip) {
   const QString path = dir.filePath("config.toml");
   {
     AppConfig config({path});
-    config.setSelectionEnabled(false);
     config.setMathEnabled(false);
     config.setHighlightingEnabled(false);
     config.setCodeWrapping(true);
@@ -269,7 +268,6 @@ TEST(AppConfig, ReaderFeaturesValidateAndRoundTrip) {
     ASSERT_TRUE(config.flush());
   }
   AppConfig config({path});
-  EXPECT_FALSE(config.selectionEnabled());
   EXPECT_FALSE(config.mathEnabled());
   EXPECT_FALSE(config.highlightingEnabled());
   EXPECT_TRUE(config.codeWrapping());
@@ -390,4 +388,78 @@ TEST(AppConfigHeader, AtomicSaveAndUnreadableSelectedOverrideDoNotFallThrough) {
     QTRY_VERIFY_WITH_TIMEOUT(!config.showTitle() && config.showCloseButton(), 3000);
   }
   qputenv("XDG_CURRENT_DESKTOP", desktop);
+}
+
+TEST(AppConfig, DetailedSettingsValidatePersistAndResetWithoutLosingUnrelatedKeys) {
+  QTemporaryDir dir;
+  const QString path = dir.filePath("config.toml");
+  writeFile(path, "[reader]\nselection_enabled = false\n[reader.style.table]\nfuture = 'keep'\n");
+  QVariantMap expected;
+  {
+    AppConfig config({path});
+    for (const auto& entry : AppConfig::settingFields()) {
+      const auto field = entry.toMap();
+      const auto key = field.value("key").toString();
+      const auto kind = field.value("kind").toString();
+      QVariant value;
+      if (kind == "color") {
+        value = QString("#80336699");
+      } else if (kind == "font") {
+        value = QFont("Serif", 17, QFont::Bold, true);
+      } else if (kind == "bool") {
+        value = true;
+      } else if (key.endsWith("MinimumLines")) {
+        value = 9;
+      } else if (key.endsWith("MaximumLines")) {
+        value = 40;
+      } else {
+        value = 1;
+      }
+      config.setReaderSetting(key, value);
+      ASSERT_TRUE(config.readerSettings().contains(key)) << key.toStdString();
+    }
+    expected = config.readerSettings();
+    config.setReaderSetting("style.h1Font", "bad alias");
+    EXPECT_EQ(config.readerSettings(), expected);
+    ASSERT_TRUE(config.flush());
+  }
+  EXPECT_FALSE(readFile(path).contains("selection_enabled"));
+  EXPECT_TRUE(readFile(path).contains("future = 'keep'") || readFile(path).contains("future = \"keep\""));
+  AppConfig config({path});
+  EXPECT_EQ(config.readerSettings(), expected);
+  for (const auto& key : expected.keys()) {
+    config.resetReaderSetting(key);
+  }
+  EXPECT_TRUE(config.readerSettings().isEmpty());
+  ASSERT_TRUE(config.flush());
+  AppConfig reloaded({path});
+  EXPECT_TRUE(reloaded.readerSettings().isEmpty());
+  EXPECT_TRUE(readFile(path).contains("future"));
+}
+
+TEST(AppConfig, DetailedInvalidValuesFallBackPerKeyAndLineBoundsStayOrdered) {
+  const auto values = AppConfig::parse(
+      "[reader]\nselection_enabled = false\n[reader.options]\nstylePreset = 6\nsyntaxPalette = 'dark'\n"
+      "codeBlockHeightRatio = 0\ncodeBlockMinimumLines = 50\ncodeBlockMaximumLines = 2\n"
+      "inlineMathEnabled = 1\n[reader.style]\nbodyColor = 'no color'\nbodyFont = 'invalid'\n"
+      "blockSpacing = nan\n[reader.style.math]\nscale = -1\n[reader.syntax]\nkeywordColor = 42\n");
+  ASSERT_TRUE(values);
+  EXPECT_EQ(values->warnings.size(), 10);
+  EXPECT_EQ(values->reader_settings.value("options.codeBlockMinimumLines").toInt(), 50);
+  EXPECT_EQ(values->reader_settings.value("options.codeBlockMaximumLines").toInt(), 50);
+  EXPECT_FALSE(values->reader_settings.contains("style.bodyColor"));
+  for (const QByteArray& legacy : {QByteArray("false"), QByteArray("'ignored'"), QByteArray("123")}) {
+    const auto parsed = AppConfig::parse("[reader]\nselection_enabled = " + legacy + "\n");
+    ASSERT_TRUE(parsed);
+    EXPECT_TRUE(parsed->warnings.isEmpty());
+  }
+  QTemporaryDir dir;
+  AppConfig config({dir.filePath("config.toml")});
+  config.setReaderSetting("options.codeBlockMaximumLines", 1);
+  EXPECT_EQ(config.readerSetting("options.codeBlockMaximumLines").toInt(), 30);
+  config.setReaderSetting("options.codeBlockMinimumLines", 100);
+  EXPECT_EQ(config.readerSetting("options.codeBlockMinimumLines").toInt(), 8);
+  config.setReaderSetting("style.math.scale", 0);
+  config.setReaderSetting("options.gfmEnabled", 1);
+  EXPECT_TRUE(config.readerSettings().isEmpty());
 }

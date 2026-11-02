@@ -129,11 +129,47 @@ These commands change the running user-service environment; installation does no
 
 Ctrl+F opens Find; Enter/Shift+Enter and F3/Shift+F3 move between results. Escape closes Find and
 retains query/case. Ctrl+Shift+O toggles the outline. Alt+Left/Right navigate session history.
-Ctrl+A enables text selection and selects the document. Tab traverses document links when the reader has focus.
+Text is always selectable; Ctrl+A selects the document. Tab traverses document links when the reader has focus.
 Selection keeps eligible formulas rendered and copies their TeX. Active Find displays TeX source.
 
-The `[reader]` TOML booleans `selection_enabled`, `math_enabled`, `highlighting_enabled`, `line_numbers`, and
-`height_limiting` default to `true`; `code_wrapping` defaults to `false`. Settings exposes all six.
+The `[reader]` TOML booleans `math_enabled`, `highlighting_enabled`, `line_numbers`, and
+`height_limiting` default to `true`; `code_wrapping` defaults to `false`. Legacy `selection_enabled`
+is ignored and removed on the next successful settings save.
+
+Ctrl+, opens Settings with General, Typography, Headings, Code, Highlighting, Tables, and Markdown & Math
+tabs. Changes apply immediately and save automatically. Escape or the top-right close icon dismisses the
+dialog. Each page scrolls independently; configuration errors and the file path stay visible.
+Font and alpha-capable color dialogs edit detailed styles; Reset removes an override.
+
+Automatic style keeps the application appearance; Legacy, Polished Light/Dark and Minimal Light/Dark
+use QMarkdown presets. The syntax palette follows the reader theme unless Light or Dark is selected.
+General font/spacing preferences apply before detailed overrides, then zoom scales the resolved fonts.
+Overrides are shared across reader themes. New settings live in nested `[reader.options]`,
+`[reader.style]` (including `headings.h1`–`h6`, `codeBlock`, `inlineCode`, `table`, and `math`),
+`[reader.syntax]` and `[reader.view]` tables. Names match the public QMarkdown properties; grouped
+aliases appear once. For example:
+
+```toml
+[reader.options]
+stylePreset = 0 # Automatic; 1–5 select the presets listed above
+syntaxPalette = 0 # Automatic, 1 Light, 2 Dark
+inlineMathEnabled = false
+footnotesEnabled = false
+gfmEnabled = true
+codeBlockHeightRatio = 0.5
+codeBlockMinimumLines = 8
+codeBlockMaximumLines = 30
+
+[reader.style.codeBlock]
+lineNumberColor = "#ff808080"
+
+[reader.syntax]
+keywordColor = "#ff8855aa"
+```
+
+GFM enables autolinks, strikethrough, tables, tag filtering and task lists together. Individual switches
+retain their values and become editable when GFM is off. Block math is enabled by default; inline math
+and footnotes are opt-in. Invalid detailed settings fall back per key with warnings.
 Code blocks show language/Copy controls and occupy at most half the viewport within 8–30 line limits.
 Missing optional provider backends retain source/plain-code fallback and are explained in Settings.
 Local images are restricted to the loaded file's directory; remote images are denied.

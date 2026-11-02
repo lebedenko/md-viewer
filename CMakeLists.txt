@@ -52,7 +52,7 @@ target_compile_definitions(mdv PRIVATE MD_VIEWER_QMARKDOWN_IMPORT_PATH="${QMarkd
 target_compile_options(mdv PRIVATE $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>)
 set(reader_action_icons
   assets/copy.svg assets/back.svg assets/forward.svg assets/open.svg assets/find.svg
-  assets/edit.svg assets/outline.svg assets/settings.svg assets/close.svg)
+  assets/edit.svg assets/outline.svg assets/settings.svg assets/close.svg assets/reset.svg)
 qt_add_resources(mdv "application-icon" PREFIX "/" FILES assets/mdv.svg ${reader_action_icons})
 set_target_properties(mdv PROPERTIES INSTALL_RPATH "$<TARGET_FILE_DIR:QMarkdown::QMarkdown>")
 install(FILES assets/mdv.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)

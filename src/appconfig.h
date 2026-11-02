@@ -6,6 +6,8 @@
 #include <QString>
 #include <QStringList>
 #include <QTimer>
+#include <QVariantList>
+#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 #include <expected>
@@ -24,13 +26,14 @@ class AppConfig : public QObject {
   Q_PROPERTY(QString codeFont READ codeFont WRITE setCodeFont NOTIFY codeFontChanged)
   Q_PROPERTY(double blockSpacing READ blockSpacing WRITE setBlockSpacing NOTIFY blockSpacingChanged)
   Q_PROPERTY(bool linkUnderline READ linkUnderline WRITE setLinkUnderline NOTIFY linkUnderlineChanged)
-  Q_PROPERTY(bool selectionEnabled READ selectionEnabled WRITE setSelectionEnabled NOTIFY selectionEnabledChanged)
   Q_PROPERTY(bool mathEnabled READ mathEnabled WRITE setMathEnabled NOTIFY mathEnabledChanged)
   Q_PROPERTY(
       bool highlightingEnabled READ highlightingEnabled WRITE setHighlightingEnabled NOTIFY highlightingEnabledChanged)
   Q_PROPERTY(bool codeWrapping READ codeWrapping WRITE setCodeWrapping NOTIFY codeWrappingChanged)
   Q_PROPERTY(bool lineNumbers READ lineNumbers WRITE setLineNumbers NOTIFY lineNumbersChanged)
   Q_PROPERTY(bool heightLimiting READ heightLimiting WRITE setHeightLimiting NOTIFY heightLimitingChanged)
+  Q_PROPERTY(QVariantMap readerSettings READ readerSettings NOTIFY readerSettingsChanged)
+  Q_PROPERTY(QVariantList settingFields READ settingFields CONSTANT)
   Q_PROPERTY(QStringList editorCommand READ editorCommand CONSTANT)
   Q_PROPERTY(QString path READ path CONSTANT)
   Q_PROPERTY(QString error READ error NOTIFY errorChanged)
@@ -60,12 +63,12 @@ class AppConfig : public QObject {
     QString code_font;
     double block_spacing = 1.0;  // multiplier of the preset's block spacing
     bool link_underline = true;
-    bool selection_enabled = true;
     bool math_enabled = true;
     bool highlighting_enabled = true;
     bool code_wrapping = false;
     bool line_numbers = true;
     bool height_limiting = true;
+    QVariantMap reader_settings;
     QStringList editor_command;  // argv with optional {file}; empty: the desktop's default handler
     QStringList warnings;        // unknown keys and invalid values; the file is still usable
   };
@@ -80,6 +83,11 @@ class AppConfig : public QObject {
 
   ~AppConfig() override;
   bool flush();
+  static QVariantList settingFields();
+  [[nodiscard]] QVariantMap readerSettings() const { return values_.reader_settings; }
+  Q_INVOKABLE void setReaderSetting(const QString& key, const QVariant& value);
+  Q_INVOKABLE void resetReaderSetting(const QString& key);
+  Q_INVOKABLE [[nodiscard]] QVariant readerSetting(const QString& key) const;
 
   [[nodiscard]] bool showTitle() const { return show_title_; }
   [[nodiscard]] bool showCloseButton() const { return show_close_button_; }
@@ -90,8 +98,6 @@ class AppConfig : public QObject {
   [[nodiscard]] QString codeFont() const { return values_.code_font; }
   [[nodiscard]] double blockSpacing() const { return values_.block_spacing; }
   [[nodiscard]] bool linkUnderline() const { return values_.link_underline; }
-  [[nodiscard]] bool selectionEnabled() const { return values_.selection_enabled; }
-  void setSelectionEnabled(bool value);
   [[nodiscard]] bool mathEnabled() const { return values_.math_enabled; }
   void setMathEnabled(bool value);
   [[nodiscard]] bool highlightingEnabled() const { return values_.highlighting_enabled; }
@@ -114,6 +120,7 @@ class AppConfig : public QObject {
   void setLinkUnderline(bool underline);
 
  signals:
+  void readerSettingsChanged();
   void headerChanged();
   void zoomChanged();
   void widthPresetChanged();
@@ -122,7 +129,6 @@ class AppConfig : public QObject {
   void codeFontChanged();
   void blockSpacingChanged();
   void linkUnderlineChanged();
-  void selectionEnabledChanged();
   void mathEnabledChanged();
   void highlightingEnabledChanged();
   void codeWrappingChanged();

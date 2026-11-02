@@ -15,15 +15,16 @@ src/main.cpp -> QML engine -> Main.qml -> ReaderPane.qml -> QMarkdown 1.18.0
 ```
 
 The `mdv` executable owns its MdViewer QML module. Main composes the window and maps the effective Qt palette to
-ReaderPane. ReaderPane owns its viewport, rendering style, selection enablement and code-copy controls.
+ReaderPane. ReaderPane owns its viewport, rendering style, permanently enabled selection and code-copy controls.
 Main also provides a header/footer frame; ReaderPane selects qmarkdown's Polished preset from the system theme,
 keeps palette-bound color overrides and enables all GFM extensions.
 `AppConfig` reads and atomically writes TOML preferences (zoom, column width, theme, fonts, spacing, link underline,
-selection, math, highlighting and code controls); `SettingsDialog` edits them (SDD 0008). Clipboard owns the operating-system clipboard write. With no file argument an Open prompt is displayed (SDD 0020). `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003. It also watches the file and its directory and reloads saves after a debounce (SDD 0012).
+math, highlighting and code controls, plus allowlisted nested style/syntax overrides); `SettingsDialog` edits them
+in seven independently scrollable tabs ([SDD 0022](sdd/0022-settings-redesign.md)). Clipboard owns the operating-system clipboard write. With no file argument an Open prompt is displayed (SDD 0020). `DocumentSession` loads one local file asynchronously (CLI path, `QtQuick.Dialogs` file dialog or drop; UTF-8 only, 16 MiB cap, last good content kept on failure); see SDD 0003. It also watches the file and its directory and reloads saves after a debounce (SDD 0012).
 NavigationController owns DocumentSession, relative link resolution, desktop HTTP(S) launching and in-memory
 Back/Forward history. ReaderPane uses public Find, heading, fragment and navigation rectangles; positions restore
 proportionally. Local images are authorized only under the successfully opened document directory; remote images
-remain denied. Selection, math, highlighting and code controls are preferences; see SDD 0014.
+remain denied. Math, highlighting and code controls are preferences; selection is always enabled (SDD 0022).
 `EditorLauncher` opens the current local file through the `[editor] command` argv array (or the desktop default) without a
 shell; see SDD 0017. Standard runtime Controls allow user-selected installed styles without a direct dependency on any specific style.
 
@@ -69,8 +70,7 @@ selection endpoints on close. Unordered task indicators replace bullets through 
 ordered tasks retain numbers. The viewport wheel observer is nonblocking for nested code scrolling
 ([SDD 0016](sdd/0016-qmarkdown-1.14.md)).
 The 1.17.1 baseline adds upstream hybrid text rendering and the highlighting initialization fix
-([SDD 0019](sdd/0019-qmarkdown-1.17.1.md)); inline math, footnotes and custom highlighting providers remain opt-in
-and are not integrated into this reader.
+([SDD 0019](sdd/0019-qmarkdown-1.17.1.md)); inline math and footnotes are opt-in reader settings. Custom highlighting providers remain outside the reader.
 The 1.18.0 baseline adds upstream retained padded-paragraph rendering; streaming stays disabled
 ([SDD 0021](sdd/0021-qmarkdown-1.18.0.md)). Existing public APIs and SOVERSION 1 remain compatible.
 Do not implement regex Markdown parsing or inspect renderer delegates to bridge the gap.
@@ -98,3 +98,10 @@ are described in [SDD 0010](sdd/0010-desktop-installation.md); dependencies rema
 
 Header preferences layer the selected base and first existing desktop override with debounced header-only watches;
 reader settings are unaffected. The icon toolbar and right-hand outline are specified in [SDD 0020](sdd/0020-reader-visual-design.md).
+
+Settings resolution uses public MarkdownStyle groups and SyntaxTheme roles only. AppConfig's explicit
+allowlist validates types, enums, colors, fonts and finite numeric ranges; ReaderPane binds each canonical
+style property once. Preset/application defaults precede legacy general font/spacing settings, detailed
+shared overrides and font zoom. Automatic syntax follows the effective reader theme. The GFM aggregate
+and retained individual extension values stay separate. Legacy selection_enabled is ignored and removed
+on the next successful save; malformed-file and unrelated-key preservation remain unchanged.

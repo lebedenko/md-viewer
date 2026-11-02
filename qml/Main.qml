@@ -110,11 +110,13 @@ Controls.ApplicationWindow {
     Shortcut { sequence: "Ctrl+Shift+O"; enabled: window.canEdit; onActivated: reader.outlineVisible = !reader.outlineVisible }
     Shortcut { sequence: "Alt+Left"; onActivated: navigation.back() }
     Shortcut { sequence: "Alt+Right"; onActivated: navigation.forward() }
-    Shortcut { sequence: "Ctrl+A"; enabled: window.canEdit; onActivated: { config.selectionEnabled = true; reader.selectAll() } }
+    Shortcut { sequence: "Ctrl+A"; enabled: window.canEdit; onActivated: reader.selectAll() }
     SettingsDialog {
         id: settingsDialog
         objectName: "settingsDialog"
         appConfig: config
+        readerPane: reader
+        onClosed: settingsButton.forceActiveFocus()
         widthPresets: window.widthPresets
         themes: window.themes
         mathAvailable: reader.mathAvailable
@@ -268,7 +270,7 @@ Controls.ApplicationWindow {
         linkUnderline: config.linkUnderline
         maxColumnWidth: window.widthPresets[window.widthPresetIndex].width
         markdown: window.session.markdown
-        selectionEnabled: config.selectionEnabled
+        appConfig: config
         mathEnabled: config.mathEnabled
         highlightingEnabled: config.highlightingEnabled
         codeWrapping: config.codeWrapping

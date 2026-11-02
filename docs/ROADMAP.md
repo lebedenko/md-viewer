@@ -30,6 +30,7 @@ in [0016](sdd/0016-qmarkdown-1.14.md). The 1.17.1 upgrade is tracked in
 - [x] Column width presets ([0006](sdd/0006-column-width.md)).
 - [x] TOML application configuration, XDG location ([0007](sdd/0007-toml-config.md)).
 - [x] Toolbar settings button and modal settings window ([0008](sdd/0008-settings-window.md)).
+- [x] Tabbed settings, public style/syntax overrides, Markdown extensions and permanent selection ([0022](sdd/0022-settings-redesign.md)); native review pending.
 - [x] Small typography preferences; reader light/dark override ([0011](sdd/0011-typography-theme.md)).
 - [x] Live reload through ordinary and atomic saves, with proportional position preservation ([0012](sdd/0012-live-reload.md)); native check pending.
 - [x] Configured external editor action; safe argument handling and failure feedback ([0017](sdd/0017-external-editor.md)); native check pending.

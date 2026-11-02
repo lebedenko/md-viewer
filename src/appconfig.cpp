@@ -1,16 +1,23 @@
 #include "appconfig.h"
 
+#include "readersettings.h"
+
+#include <QColor>
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QFont>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QSaveFile>
 
 #include <algorithm>
 #include <array>
 #include <cerrno>
 #include <cmath>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -88,7 +95,6 @@ bool applyBoolean(std::string_view name, const toml::node& node, AppConfig::Valu
     bool AppConfig::Values::* member;
   };
   static constexpr std::array preferences = {
-      Preference{.name = "selection_enabled", .member = &AppConfig::Values::selection_enabled},
       Preference{.name = "math_enabled", .member = &AppConfig::Values::math_enabled},
       Preference{.name = "highlighting_enabled", .member = &AppConfig::Values::highlighting_enabled},
       Preference{.name = "code_wrapping", .member = &AppConfig::Values::code_wrapping},
@@ -107,13 +113,128 @@ bool applyBoolean(std::string_view name, const toml::node& node, AppConfig::Valu
   return true;
 }
 
+std::optional<QVariant> validatedSetting(const QVariantMap& field, const QVariant& value) {
+  const QString kind = field.value("kind").toString();
+  if (kind == "color") {
+    const QColor color(value.toString());
+    if (color.isValid()) {
+      return color.name(QColor::HexArgb);
+    }
+  } else if (kind == "font") {
+    QFont font;
+    if (value.metaType() == QMetaType::fromType<QFont>()) {
+      font = value.value<QFont>();
+    } else if (value.metaType() != QMetaType::fromType<QString>() || value.toString().count(',') < 9 ||
+               !font.fromString(value.toString())) {
+      return {};
+    }
+    if (!font.family().isEmpty() && font.pointSizeF() > 0) {
+      return font;
+    }
+  } else if (kind == "bool") {
+    if (value.metaType() == QMetaType::fromType<bool>()) {
+      return value;
+    }
+  } else if (value.metaType() != QMetaType::fromType<QString>() && value.metaType() != QMetaType::fromType<bool>() &&
+             value.canConvert<double>()) {
+    const double number = value.toDouble();
+    if (std::isfinite(number) && number >= field.value("minimum").toDouble() &&
+        number <= field.value("maximum").toDouble() && (kind == "number" || number == std::floor(number))) {
+      return number;
+    }
+  }
+  return {};
+}
+
+void parseReaderGroup(const toml::table& table, const QString& prefix, AppConfig::Values& values) {
+  for (const auto& [key, node] : table) {
+    const QString path = prefix + "." + toQString(key.str());
+    if (const auto* group = node.as_table()) {
+      const auto fields = AppConfig::settingFields();
+      const bool known = std::ranges::any_of(fields, [&path](const QVariant& entry) {
+        return entry.toMap().value("key").toString().startsWith(path + '.');
+      });
+      if (known) {
+        parseReaderGroup(*group, path, values);
+      } else {
+        values.warnings.append("invalid or unknown reader." + path);
+      }
+      continue;
+    }
+    QVariant input;
+    if (node.is_boolean()) {
+      input = *node.value<bool>();
+    } else if (node.is_number()) {
+      input = *node.value<double>();
+    } else if (node.is_string()) {
+      input = toQString(*node.value<std::string_view>());
+    }
+    bool valid = false;
+    for (const auto& entry : AppConfig::settingFields()) {
+      const auto field = entry.toMap();
+      if (field.value("key").toString() != path) {
+        continue;
+      }
+      if (auto normalized = validatedSetting(field, input)) {
+        values.reader_settings.insert(path, *normalized);
+        valid = true;
+      }
+      break;
+    }
+    if (!valid) {
+      values.warnings.append("invalid or unknown reader." + path);
+    }
+  }
+}
+
+void saveReaderSettings(toml::table& reader, const QVariantMap& settings) {
+  for (const auto& entry : AppConfig::settingFields()) {
+    const auto field = entry.toMap();
+    const QString key = field.value("key").toString();
+    const auto parts = key.split('.');
+    toml::table* target = &reader;
+    for (qsizetype i = 0; i < parts.size() - 1; ++i) {
+      const auto part = parts[i].toStdString();
+      if (!(*target)[part].is_table()) {
+        target->insert_or_assign(part, toml::table{});
+      }
+      target = (*target)[part].as_table();
+    }
+    const auto leaf = parts.last().toStdString();
+    if (!settings.contains(key)) {
+      target->erase(leaf);
+      continue;
+    }
+    const auto value = settings.value(key);
+    const auto kind = field.value("kind").toString();
+    if (kind == "bool") {
+      target->insert_or_assign(leaf, value.toBool());
+    } else if (kind == "font") {
+      target->insert_or_assign(leaf, value.value<QFont>().toString().toStdString());
+    } else if (kind == "color") {
+      target->insert_or_assign(leaf, value.toString().toStdString());
+    } else {
+      target->insert_or_assign(leaf, value.toDouble());
+    }
+  }
+}
+
 void applyReader(const toml::table& reader, AppConfig::Values& values) {
   for (const auto& [key, node] : reader) {
     const std::string_view name = key.str();
+    if (name == "selection_enabled") {
+      continue;
+    }
     if (applyBoolean(name, node, values)) {
       continue;
     }
-    if (name == "zoom") {
+    if (name == "options" || name == "style" || name == "syntax" || name == "view") {
+      if (const auto* group = node.as_table()) {
+        parseReaderGroup(*group, toQString(name), values);
+      } else {
+        values.warnings.append("reader." + toQString(name) + " must be a table");
+      }
+    } else if (name == "zoom") {
       applyNumber(node, "zoom", AppConfig::kMinZoom, AppConfig::kMaxZoom, values.zoom, values.warnings);
     } else if (name == "column_width") {
       applyWidth(node, values);
@@ -200,6 +321,12 @@ std::expected<AppConfig::Values, QString> AppConfig::parse(const QByteArray& byt
   }
   if (const auto* editor = table["editor"].as_table()) {
     applyEditor(*editor, values);
+  }
+  const int minimum = values.reader_settings.value("options.codeBlockMinimumLines", 8).toInt();
+  const int maximum = values.reader_settings.value("options.codeBlockMaximumLines", 30).toInt();
+  if (maximum < minimum) {
+    values.warnings.append("reader.options.codeBlockMaximumLines must be at least minimum lines");
+    values.reader_settings.insert("options.codeBlockMaximumLines", minimum);
   }
   return values;
 }
@@ -435,15 +562,6 @@ void AppConfig::setLinkUnderline(bool underline) {
   scheduleSave();
 }
 
-void AppConfig::setSelectionEnabled(bool value) {
-  if (value == values_.selection_enabled) {
-    return;
-  }
-  values_.selection_enabled = value;
-  emit selectionEnabledChanged();
-  scheduleSave();
-}
-
 void AppConfig::setMathEnabled(bool value) {
   if (value == values_.math_enabled) {
     return;
@@ -537,7 +655,8 @@ bool AppConfig::save() {
   reader.insert_or_assign("code_font", values_.code_font.toStdString());
   reader.insert_or_assign("block_spacing", values_.block_spacing);
   reader.insert_or_assign("link_underline", values_.link_underline);
-  reader.insert_or_assign("selection_enabled", values_.selection_enabled);
+  reader.erase("selection_enabled");
+  saveReaderSettings(reader, values_.reader_settings);
   reader.insert_or_assign("math_enabled", values_.math_enabled);
   reader.insert_or_assign("highlighting_enabled", values_.highlighting_enabled);
   reader.insert_or_assign("code_wrapping", values_.code_wrapping);
@@ -560,4 +679,58 @@ bool AppConfig::save() {
   }
   setError({});
   return true;
+}
+
+QVariantList AppConfig::settingFields() {
+  static const QVariantList fields = QJsonDocument::fromJson(kReaderSettings).array().toVariantList();
+  return fields;
+}
+QVariant AppConfig::readerSetting(const QString& key) const {
+  if (values_.reader_settings.contains(key)) {
+    return values_.reader_settings.value(key);
+  }
+  for (const auto& entry : settingFields()) {
+    const auto field = entry.toMap();
+    if (field.value("key").toString() == key) {
+      return field.value("defaultValue");
+    }
+  }
+  return {};
+}
+void AppConfig::setReaderSetting(const QString& key, const QVariant& value) {
+  for (const auto& entry : settingFields()) {
+    const auto field = entry.toMap();
+    if (field.value("key").toString() != key) {
+      continue;
+    }
+    const auto normalized = validatedSetting(field, value);
+    if (!normalized || values_.reader_settings.value(key) == *normalized) {
+      return;
+    }
+    if (key == "options.codeBlockMinimumLines" &&
+        normalized->toInt() > readerSetting("options.codeBlockMaximumLines").toInt()) {
+      return;
+    }
+    if (key == "options.codeBlockMaximumLines" &&
+        normalized->toInt() < readerSetting("options.codeBlockMinimumLines").toInt()) {
+      return;
+    }
+    values_.reader_settings.insert(key, *normalized);
+    emit readerSettingsChanged();
+    scheduleSave();
+    return;
+  }
+}
+void AppConfig::resetReaderSetting(const QString& key) {
+  if (values_.reader_settings.remove(key) == 0) {
+    return;
+  }
+  if (key == "options.codeBlockMaximumLines" && readerSetting("options.codeBlockMinimumLines").toInt() > 30) {
+    values_.reader_settings.remove("options.codeBlockMinimumLines");
+  }
+  if (key == "options.codeBlockMinimumLines" && readerSetting("options.codeBlockMaximumLines").toInt() < 8) {
+    values_.reader_settings.remove("options.codeBlockMaximumLines");
+  }
+  emit readerSettingsChanged();
+  scheduleSave();
 }
