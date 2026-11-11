@@ -45,7 +45,7 @@ constexpr std::array<ThemeName, AppConfig::kThemeCount> kThemeNames = {
     {.name = "dark", .value = AppConfig::Dark}};
 
 bool isAbsent(const QString& path) {
-  struct stat info{};
+  struct stat info = {};
   return ::lstat(QFile::encodeName(path).constData(), &info) != 0 && errno == ENOENT;
 }
 
@@ -90,9 +90,10 @@ void applyWidth(const toml::node& node, AppConfig::Values& values) {
 }
 
 bool applyBoolean(std::string_view name, const toml::node& node, AppConfig::Values& values) {
+  using Member = bool AppConfig::Values::*;
   struct Preference {
     std::string_view name;
-    bool AppConfig::Values::* member;
+    Member member;
   };
   static constexpr std::array preferences = {
       Preference{.name = "math_enabled", .member = &AppConfig::Values::math_enabled},
