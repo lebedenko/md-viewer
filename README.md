@@ -3,11 +3,12 @@
 A standalone Qt Quick application for reading and navigating local Markdown documentation.
 Built with C++23, Qt 6.8+, and the external QMarkdown 1.18.0 library. Linux is the initial supported platform.
 
-**Current state: local documentation reader.** Open local files from the command line, file dialog or drag and drop;
+**Current state: local documentation reader.** Open local files or a folder from the command line, dialog or drag and drop;
 select and copy rendered text or code, adjust keyboard zoom and column width, and edit preferences in Settings.
 Preferences persist in TOML after a 250 ms pause in changes and flush on shutdown.
 Live reload, session Back/Forward history, outline, Find, keyboard links and directory-scoped local images are available.
-Folder browsing remains planned. Selection keeps eligible formulas rendered and copies TeX; active Find displays TeX source.
+`mdv <dir>` lists the folder's Markdown in a left sidebar (Ctrl+B) with a filename picker (Ctrl+P).
+Selection keeps eligible formulas rendered and copies TeX; active Find displays TeX source.
 There is no HoloNight dependency, embedded editor, or Vim interaction layer.
 
 ## Start developing

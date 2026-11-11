@@ -54,7 +54,8 @@ Exit: follow a cross-document heading link, find text, copy it, return to the pr
 
 ## 3 — Folder browsing and continuity
 
-- [ ] Open a folder, lazy Markdown tree, filename picker and defined hidden/ignored/symlink behavior.
+- [x] Open a folder, pruned Markdown tree, filename picker and defined hidden/ignored/symlink behavior
+      ([0023](sdd/0023-folder-browsing.md)); native review pending.
 - [ ] Recent documents and remembered reading positions.
 - [ ] Tabs/session restoration and read-only source view, after validating the simpler workflow.
 

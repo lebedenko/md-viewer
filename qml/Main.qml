@@ -12,7 +12,18 @@ Controls.ApplicationWindow {
     property string displayedFailure: ""
     property var failureOrigin: null
     readonly property string statusMessage: displayedFailure ? "\u26A0 " + displayedFailure
-        : (session.warning ? "\u26A0 " + session.warning : "")
+        : (session.warning ? "\u26A0 " + session.warning
+        : (folderModel.loading ? qsTr("Scanning %1…").arg(folderModel.loading) : ""))
+    property bool filesVisible: true
+    readonly property bool folderOpen: folderModel.root !== ""
+
+    // Directories open as the browsed folder; everything else is a document.
+    function openLocation(location) {
+        if (folderModel.isDirectory(location))
+            folderModel.openPath(location)
+        else
+            navigation.openPath(location)
+    }
 
     function reportFailure(origin, message) {
         failureOrigin = origin
@@ -37,9 +48,22 @@ Controls.ApplicationWindow {
     EditorLauncher { id: editor; command: config.editorCommand }
     readonly property bool canEdit: session.revision > 0 && session.url.toString() !== ""
 
+    FolderModel {
+        id: folderModel
+        current: window.session.url
+        onErrorOccurred: message => window.reportFailure(folderModel, message)
+        onOpened: {
+            window.clearFailure(folderModel)
+            window.filesVisible = true
+            if (readme.toString() !== "" && !contains(window.session.url))
+                navigation.open(readme)
+        }
+    }
+    onActiveChanged: if (active) folderModel.refresh()
+
     Component.onCompleted: {
         if (initialPath)
-            navigation.openPath(initialPath)
+            openLocation(initialPath)
     }
 
     readonly property var zoomSteps: [0.5, 0.67, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0]
@@ -105,6 +129,9 @@ Controls.ApplicationWindow {
         onActivated: settingsDialog.open()
     }
 
+    Shortcut { sequence: "Ctrl+Alt+O"; onActivated: folderDialog.open() }
+    Shortcut { sequence: "Ctrl+B"; enabled: window.folderOpen; onActivated: window.filesVisible = !window.filesVisible }
+    Shortcut { sequence: "Ctrl+P"; enabled: window.folderOpen; onActivated: picker.open() }
     Shortcut { sequence: "Ctrl+E"; enabled: window.canEdit; onActivated: editor.openInEditor(window.session.url) }
     Shortcut { sequence: "Ctrl+F"; enabled: window.canEdit; onActivated: reader.openFind() }
     Shortcut { sequence: "Ctrl+Shift+O"; enabled: window.canEdit; onActivated: reader.outlineVisible = !reader.outlineVisible }
@@ -129,6 +156,22 @@ Controls.ApplicationWindow {
         fileMode: FileDialog.OpenFile
         nameFilters: [qsTr("Markdown files (*.md *.markdown)"), qsTr("All files (*)")]
         onAccepted: navigation.open(selectedFile)
+    }
+
+    FolderDialog {
+        id: folderDialog
+        title: qsTr("Open folder")
+        onAccepted: folderModel.openPath(selectedFolder.toString())
+    }
+
+    FilePicker {
+        id: picker
+        objectName: "filePicker"
+        folder: folderModel
+        x: Math.round((window.width - width) / 2)
+        y: 16
+        width: Math.min(520, window.width - 32)
+        onFileChosen: file => navigation.open(file)
     }
 
     header: Controls.ToolBar {
@@ -160,6 +203,20 @@ Controls.ApplicationWindow {
                 iconKey: "open"
                 themeName: "document-open"
                 onClicked: openDialog.open()
+            }
+            IconButton {
+                objectName: "filesButton"
+                label: window.folderOpen ? qsTr("Files (Ctrl+B)") : qsTr("Open folder (Ctrl+Alt+O)")
+                iconKey: "files"
+                themeName: "folder"
+                checkable: window.folderOpen
+                checked: sidebar.visible
+                onClicked: {
+                    if (window.folderOpen)
+                        window.filesVisible = checked
+                    else
+                        folderDialog.open()
+                }
             }
             ColumnLayout {
                 objectName: "headerTitle"
@@ -254,10 +311,28 @@ Controls.ApplicationWindow {
         }
     }
 
+    FolderSidebar {
+        id: sidebar
+        objectName: "folderSidebar"
+        folder: folderModel
+        visible: window.folderOpen && window.filesVisible
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: visible ? Math.min(260, Math.floor(parent.width / 3)) : 0
+        color: reader.paperColor
+        textColor: reader.textColor
+        accentColor: reader.linkColor
+        onFileActivated: file => navigation.open(file)
+    }
+
     ReaderPane {
         id: reader
         objectName: "readerPane"
-        anchors.fill: parent
+        anchors.left: sidebar.right
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
         dark: config.theme === AppConfig.System ? window.palette.base.hslLightness < 0.5 : config.theme === AppConfig.Dark
         paperColor: config.theme === AppConfig.System ? window.palette.base : dark ? "#1e1f22" : "#ffffff"
         textColor: config.theme === AppConfig.System ? window.palette.text : dark ? "#e3e5e8" : "#1f2328"
@@ -286,12 +361,13 @@ Controls.ApplicationWindow {
 
     ColumnLayout {
         objectName: "openPrompt"
-        anchors.centerIn: parent
+        anchors.centerIn: reader
         visible: window.session.revision === 0
         Controls.BusyIndicator { Layout.alignment: Qt.AlignHCenter; running: window.session.state === DocumentSession.Loading; visible: running }
         Controls.Label { Layout.alignment: Qt.AlignHCenter; text: window.session.state === DocumentSession.Loading ? qsTr("Loading…") : qsTr("Open a Markdown file") }
         Controls.Button { Layout.alignment: Qt.AlignHCenter; text: qsTr("Open…"); onClicked: openDialog.open() }
-        Controls.Label { text: qsTr("Ctrl+O or drop a file onto this window"); opacity: 0.7 }
+        Controls.Button { objectName: "openFolderButton"; Layout.alignment: Qt.AlignHCenter; text: qsTr("Open Folder…"); onClicked: folderDialog.open() }
+        Controls.Label { text: qsTr("Ctrl+O or drop a file or folder onto this window"); opacity: 0.7 }
     }
 
     Connections {
@@ -353,7 +429,10 @@ Controls.ApplicationWindow {
             if (!drop.hasUrls || drop.urls.length === 0 || (drop.supportedActions & Qt.CopyAction) === 0)
                 return
             const url = drop.urls[0]
-            navigation.open(url)
+            if (folderModel.isDirectory(url.toString()))
+                folderModel.openPath(url.toString())
+            else
+                navigation.open(url)
             if (url.toString().toLowerCase().startsWith("file:"))
                 drop.accept(Qt.CopyAction)
         }

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <QCoreApplication>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QQmlComponent>
 #include <QQmlEngine>
@@ -35,3 +37,17 @@ struct ApplicationHarness {
     error = component.errorString();
   }
 };
+
+// Qt's QTRY_* macros return silently outside a QTest function; pair this with ASSERT_TRUE instead.
+template <typename Condition>
+bool waitFor(const Condition& condition, int timeout_ms = 5000) {
+  QElapsedTimer timer;
+  timer.start();
+  while (!condition()) {
+    if (timer.elapsed() > timeout_ms) {
+      return false;
+    }
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+  }
+  return true;
+}

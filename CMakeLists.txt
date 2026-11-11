@@ -33,14 +33,16 @@ set_source_files_properties(qml/CodeHeader.qml PROPERTIES QT_RESOURCE_ALIAS Code
 set_source_files_properties(qml/CodeScrollBar.qml PROPERTIES QT_RESOURCE_ALIAS CodeScrollBar.qml)
 set_source_files_properties(qml/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
 set_source_files_properties(qml/IconButton.qml PROPERTIES QT_RESOURCE_ALIAS IconButton.qml)
+set_source_files_properties(qml/FolderSidebar.qml PROPERTIES QT_RESOURCE_ALIAS FolderSidebar.qml)
+set_source_files_properties(qml/FilePicker.qml PROPERTIES QT_RESOURCE_ALIAS FilePicker.qml)
 qt_add_qml_module(mdv
   URI MdViewer
   VERSION 1.0
   # Shared providers are loaded through the QML engine, not static plugin imports.
   NO_IMPORT_SCAN
-  QML_FILES qml/IconButton.qml qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml
+  QML_FILES qml/IconButton.qml qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml qml/FolderSidebar.qml qml/FilePicker.qml
   SOURCES src/appconfig.h src/appconfig.cpp src/clipboard.h src/clipboard.cpp src/editorlauncher.h src/editorlauncher.cpp src/documentsession.h
-    src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp
+    src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp src/foldermodel.h src/foldermodel.cpp
   IMPORT_PATH "${QMarkdown_QML_IMPORT_PATH}"
 )
 target_link_libraries(mdv PRIVATE Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent QMarkdown::QMarkdown
@@ -52,7 +54,7 @@ target_compile_definitions(mdv PRIVATE MD_VIEWER_QMARKDOWN_IMPORT_PATH="${QMarkd
 target_compile_options(mdv PRIVATE $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall;-Wextra;-Wpedantic>)
 set(reader_action_icons
   assets/copy.svg assets/back.svg assets/forward.svg assets/open.svg assets/find.svg
-  assets/edit.svg assets/outline.svg assets/settings.svg assets/close.svg assets/reset.svg)
+  assets/edit.svg assets/outline.svg assets/settings.svg assets/close.svg assets/reset.svg assets/files.svg)
 qt_add_resources(mdv "application-icon" PREFIX "/" FILES assets/mdv.svg ${reader_action_icons})
 set_target_properties(mdv PROPERTIES INSTALL_RPATH "$<TARGET_FILE_DIR:QMarkdown::QMarkdown>")
 install(FILES assets/mdv.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
@@ -66,10 +68,10 @@ if(BUILD_TESTING)
   find_package(Qt6 6.8 REQUIRED COMPONENTS Test)
   find_package(GTest 1.12 CONFIG REQUIRED)
   add_executable(reader-tests tests/main.cpp tests/navigation_test.cpp tests/reader_test.cpp tests/documentsession_test.cpp tests/drop_test.cpp tests/application_test.cpp tests/appconfig_test.cpp
-    src/appconfig.h src/appconfig.cpp src/documentsession.h src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp src/clipboard.h src/clipboard.cpp
+    src/appconfig.h src/appconfig.cpp src/documentsession.h src/documentsession.cpp src/navigationcontroller.h src/navigationcontroller.cpp src/foldermodel.h src/foldermodel.cpp tests/foldermodel_test.cpp tests/folder_application_test.cpp src/clipboard.h src/clipboard.cpp
     src/editorlauncher.h src/editorlauncher.cpp tests/editorlauncher_test.cpp)
   qt_add_resources(reader-tests "application-qml" PREFIX "/qt/qml/MdViewer"
-    FILES qml/IconButton.qml qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml)
+    FILES qml/IconButton.qml qml/Main.qml qml/ReaderPane.qml qml/SettingsDialog.qml qml/CodeHeader.qml qml/CodeScrollBar.qml qml/TaskIndicator.qml qml/FolderSidebar.qml qml/FilePicker.qml)
   qt_add_resources(reader-tests "action-icons" PREFIX "/" FILES ${reader_action_icons})
   target_link_libraries(reader-tests PRIVATE GTest::gtest Qt6::Quick Qt6::QuickControls2 Qt6::Concurrent Qt6::Test QMarkdown::QMarkdown
     tomlplusplus::tomlplusplus)

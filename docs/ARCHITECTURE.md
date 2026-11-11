@@ -41,7 +41,7 @@ provider prefix. Relocatable bundles and static-provider deployment are future p
 | NavigationController | Relative URL resolution, back/forward entries, restoration intent | Parsing headings independently |
 | ReaderPane | Viewport, focus, palette/typography, search/outline presentation | File I/O and editor processes |
 | Desktop integration | Clipboard, validated browser links, configured editor launching | Shell-interpreted commands from document content |
-| FolderModel | Lazy Markdown file discovery and filename filtering | Persistent full-text index or Git state |
+| FolderModel | Background recursive Markdown discovery, pruned tree rows, expansion, watches, filename search | Persistent full-text index, ignore files or Git state |
 
 Keep these internal initially. Introduce types as features need them; do not create empty controller hierarchies.
 Use asynchronous file I/O with revision/generation checks so obsolete work cannot replace a newer document.
@@ -105,3 +105,8 @@ style property once. Preset/application defaults precede legacy general font/spa
 shared overrides and font zoom. Automatic syntax follows the effective reader theme. The GFM aggregate
 and retained individual extension values stay separate. Legacy selection_enabled is ignored and removed
 on the next successful save; malformed-file and unrelated-key preservation remain unchanged.
+
+Folder browsing ([SDD 0023](sdd/0023-folder-browsing.md)) adds `FolderModel`, a left `FolderSidebar` and a `FilePicker`
+popup. Main routes directory locations (CLI path, folder dialog, drop) to FolderModel and file activation to
+NavigationController; the model never loads documents. The tree lists only directories that lead to Markdown,
+follows symlinks with an ancestor cycle check, skips dot-prefixed entries and is rebuilt by rescanning, not indexed.

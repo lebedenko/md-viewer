@@ -19,12 +19,12 @@ int main(int argc, char* argv[]) {
   parser.addVersionOption();
   const QCommandLineOption smoke_option(QStringLiteral("smoke-test"), QStringLiteral("Check QML startup and exit."));
   parser.addOption(smoke_option);
-  parser.addPositionalArgument(QStringLiteral("file"), QStringLiteral("Markdown file to open."),
-                               QStringLiteral("[file]"));
+  parser.addPositionalArgument(QStringLiteral("path"), QStringLiteral("Markdown file or folder to open."),
+                               QStringLiteral("[path]"));
   parser.process(app);
   const QStringList files = parser.positionalArguments();
   if (files.size() > 1) {
-    qCritical("Expected at most one file, got %lld.", static_cast<long long>(files.size()));
+    qCritical("Expected at most one path, got %lld.", static_cast<long long>(files.size()));
     return 2;
   }
 
